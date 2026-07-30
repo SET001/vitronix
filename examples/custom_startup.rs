@@ -1,4 +1,3 @@
-use dioxus::desktop::use_window;
 /**
  * This example shows how to create a custom flow before the main app is rendered. In this example, we will show a splash screen before the main app is rendered.
  */
@@ -6,8 +5,7 @@ use dioxus::prelude::*;
 use vitronix::{CustomStartupFinished, window::Window};
 
 #[cfg(target_os = "linux")]
-use vitronix::window_utils::set_floatable;
-use vitronix::window_utils::{align_center, use_drag_window};
+use vitronix::window_utils::use_drag_window;
 fn main() {
 	vitronix::runner::run(vitronix::config::Config {
 		window: vitronix::config::WindowConfig {
