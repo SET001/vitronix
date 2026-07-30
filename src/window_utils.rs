@@ -69,7 +69,6 @@ pub fn align_center(window: &Arc<Window>, width: f32, height: f32) {
 			m_pos.x + (m.width - width) / 2.0,
 			m_pos.y + (m.height - height) / 2.0,
 		));
-		window.set_inner_size(dioxus::desktop::LogicalSize::new(width, height));
 	}
 }
 
