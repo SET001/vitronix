@@ -2,7 +2,7 @@ use dioxus::core::Element;
 
 use crate::theme::Theme;
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum WindowType {
 	Maximized,
 	Sized {

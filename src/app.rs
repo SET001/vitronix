@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{config::Config, layout::Layout};
+use crate::{config::Config, layout::Layout, window::Window};
 use dioxus::{desktop::use_window, prelude::*};
 
 #[derive(Clone)]
@@ -29,8 +29,6 @@ pub fn App() -> Element {
 		// 	let (r, g, b) = config.initial_theme.background_rgb();
 		// 	set_gtk_background_color(r, g, b, win.clone());
 		// }
-
-		win.set_visible(true);
 	});
 	rsx! {
 		// style { {include_str!("../../public/main.css")} }
@@ -38,10 +36,18 @@ pub fn App() -> Element {
 			if !*custom_startup_finished.read() {
 				Startup {}
 			} else {
-				Layout {}
+				Window{
+					title: config.window.title.clone(),
+					window_type: config.window.window_type.clone(),
+					Layout {}
+				}
 			}
 		} else {
-			Layout {}
+			Window{
+				title: config.window.title.clone(),
+				window_type: config.window.window_type.clone(),
+				Layout {}
+			}
 		}
 	}
 }
