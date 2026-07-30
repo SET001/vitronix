@@ -1,7 +1,7 @@
 use crate::{
 	ResizeHandles,
 	config::WindowType,
-	window_utils::{align_center, set_floatable},
+	window_utils::{align_center, set_floatable, use_drag_window},
 };
 use dioxus::{desktop::use_window, prelude::*};
 
@@ -14,8 +14,9 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 	};
 
 	let window = use_window();
+	let title_cloned = title.clone();
 	use_effect(move || {
-		window.set_title(&title);
+		window.set_title(&title_cloned);
 		window.set_visible(true);
 		match window_type {
 			WindowType::Maximized => {
@@ -51,5 +52,56 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 			ResizeHandles{}
 		}
 		{children}
+	}
+}
+
+#[derive(Clone, PartialEq, Props, Debug)]
+pub struct TitleBarProp {
+	title: String,
+	icon: Option<String>,
+	#[props(default = true)]
+	closeable: bool,
+	#[props(default = true)]
+	maximizable: bool,
+	#[props(default = true)]
+	minimizable: bool,
+}
+
+/**
+ * TODO:
+ * 	- maximize button
+ * 	- minimize button
+ */
+#[component]
+pub fn TitleBar(props: TitleBarProp) -> Element {
+	debug!("rendering TitleBar component with props	: {:?}", props);
+	let window = use_window();
+	let icon = props.icon.map(|icon| {
+		rsx! {
+			img { src: "{icon}" }
+		}
+	});
+
+	let close_button = props.closeable.then(|| {
+		rsx! {
+			button {
+				onmousedown: |e| e.stop_propagation(),
+				onclick: move |_| {
+					info!("Closing window");
+					window.close();
+				},
+				class: "title-bar-button",
+				"X"
+			}
+		}
+	});
+
+	rsx! {
+		div {
+			onmousedown: use_drag_window(),
+			{icon}
+			{props.title}
+			{close_button}
+		}
 	}
 }

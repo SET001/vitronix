@@ -1,6 +1,10 @@
 use std::ops::Deref;
 
-use crate::{config::Config, layout::Layout, window::Window};
+use crate::{
+	config::Config,
+	layout::Layout,
+	window::{TitleBar, Window},
+};
 use dioxus::{desktop::use_window, prelude::*};
 
 #[derive(Clone)]
@@ -30,24 +34,26 @@ pub fn App() -> Element {
 		// 	set_gtk_background_color(r, g, b, win.clone());
 		// }
 	});
+	let window = rsx! {
+		Window{
+			title: &config.window.title,
+			window_type: config.window.window_type.clone(),
+			TitleBar {
+				title: &config.window.title,
+			}
+			Layout {}
+		}
+	};
 	rsx! {
 		// style { {include_str!("../../public/main.css")} }
 		if let Some(Startup) = config.startup {
 			if !*custom_startup_finished.read() {
 				Startup {}
 			} else {
-				Window{
-					title: config.window.title.clone(),
-					window_type: config.window.window_type.clone(),
-					Layout {}
-				}
+				{window}
 			}
 		} else {
-			Window{
-				title: config.window.title.clone(),
-				window_type: config.window.window_type.clone(),
-				Layout {}
-			}
+			{window}
 		}
 	}
 }
