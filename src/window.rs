@@ -19,6 +19,7 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 		window.set_visible(true);
 		match window_type {
 			WindowType::Maximized => {
+				window.set_resizable(false);
 				if std::env::var("I3SOCK").is_ok() {
 					std::process::Command::new("i3-msg").arg("floating disable").spawn().ok();
 				}
@@ -32,14 +33,15 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 			} => {
 				window.set_resizable(resizable);
 
-				if let Some((x, y)) = position {
-					window.set_outer_position(dioxus::desktop::LogicalPosition::new(x, y));
-				}
-
 				window.set_inner_size(dioxus::desktop::LogicalSize::new(width, height));
 				#[cfg(target_os = "linux")]
 				set_floatable(&window.window);
-				align_center(&window.window, width, height);
+
+				if let Some((x, y)) = position {
+					window.set_outer_position(dioxus::desktop::LogicalPosition::new(x, y));
+				} else {
+					align_center(&window.window, width, height);
+				}
 			}
 		}
 	});
