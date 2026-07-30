@@ -37,6 +37,7 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 				}
 
 				window.set_inner_size(dioxus::desktop::LogicalSize::new(width, height));
+				#[cfg(target_os = "linux")]
 				set_floatable(&window.window);
 				align_center(&window.window, width, height);
 			}
