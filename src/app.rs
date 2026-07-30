@@ -23,8 +23,8 @@ pub fn App() -> Element {
 	debug!("rendering App component");
 	let config: Config = use_context::<Config>();
 	let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
+	let ctx = use_window();
 	use_effect(move || {
-		let ctx = use_window();
 		let win = &ctx.window;
 
 		// #[cfg(target_os = "linux")]

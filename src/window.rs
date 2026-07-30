@@ -74,7 +74,7 @@ pub struct TitleBarProp {
  */
 #[component]
 pub fn TitleBar(props: TitleBarProp) -> Element {
-	debug!("rendering TitleBar component with props	: {:?}", props);
+	debug!("rendering TitleBar component with props: {:?}", props);
 	let window = use_window();
 	let icon = props.icon.map(|icon| {
 		rsx! {
