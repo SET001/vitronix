@@ -48,10 +48,14 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 	});
 
 	rsx! {
-		if resizeable {
-			ResizeHandles{}
+		div {
+			class: "text-on-surface bg-surface border-on-surface border-2 rounded-lg w-screen h-screen overflow-hidden",
+			if resizeable {
+				ResizeHandles{}
+			}
+			{children}
+
 		}
-		{children}
 	}
 }
 

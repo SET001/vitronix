@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "./themes/eco-cyberpunk.css";
+@source "./src/**/*.rs";
+@source "./examples/**/*.rs";
+
+html, body, #main {
+	background: transparent;
+}
+
+
+
+@theme inline {
+	--color-surface: var(--color-surface);
+	--color-on-surface: var(--color-on-surface);
+}

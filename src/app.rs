@@ -45,7 +45,7 @@ pub fn App() -> Element {
 		}
 	};
 	rsx! {
-		// style { {include_str!("../../public/main.css")} }
+		style { {include_str!("../assets/styles.css")} }
 		if let Some(Startup) = config.startup {
 			if !*custom_startup_finished.read() {
 				Startup {}

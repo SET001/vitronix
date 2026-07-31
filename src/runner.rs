@@ -3,6 +3,8 @@ use crate::{app::App, config::Config};
 pub fn run(config: Config) {
 	let window = dioxus::desktop::WindowBuilder::new()
 		.with_visible(false)
+		.with_transparent(true)
+		.with_background_color((0, 0, 0, 0))
 		.with_decorations(false)
 		.with_title(&config.window.title);
 

@@ -34,7 +34,7 @@ pub fn App() -> Element {
 			},
 			div {
 				onmousedown: use_drag_window(),
-				class: "w-screen h-screen",
+				class: "w-screen h-screen p-4",
 				p{
 					"Example of how you can use a custom startup flow before the main app is rendered. In this example, we will show a splash screen before the main app is rendered."
 				}
