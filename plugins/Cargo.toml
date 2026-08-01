@@ -2,3 +2,7 @@
 edition = "2024"
 name = "plugins"
 version = "0.1.0"
+
+[dependencies]
+core = { path = "../core" }
+dioxus.workspace = true

@@ -1,10 +1,10 @@
 [package]
 edition = "2024"
-name = "vitronix"
+name = "core"
 version = "0.1.0"
 
 [dependencies]
-dioxus = { version = "0.7", features = ["desktop"] }
+dioxus.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18"

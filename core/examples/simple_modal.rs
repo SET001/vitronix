@@ -1,10 +1,13 @@
-use vitronix::{config::Config, runner::run};
+use core::{
+	config::{Config, WindowConfig, WindowType},
+	runner::run,
+};
 
 fn main() {
 	run(Config {
-		window: vitronix::config::WindowConfig {
+		window: WindowConfig {
 			title: "Vitronix splash screen example".to_string(),
-			window_type: vitronix::config::WindowType::Sized {
+			window_type: WindowType::Sized {
 				width: 800.0,
 				height: 600.0,
 				position: None,

@@ -1,5 +1,5 @@
-use vitronix::config::{Config, WindowConfig};
-use vitronix::runner::run;
+use core::config::{Config, WindowConfig};
+use core::runner::run;
 
 fn main() {
 	run(Config {

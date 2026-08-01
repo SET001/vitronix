@@ -459,6 +459,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "core"
+version = "0.1.0"
+dependencies = [
+ "dioxus",
+ "gtk",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3110,6 +3118,10 @@ checksum = "19f132c84eca552bf34cab8ec81f1c1dcc229b811638f9d283dceabe58c5569e"
 [[package]]
 name = "plugins"
 version = "0.1.0"
+dependencies = [
+ "core",
+ "dioxus",
+]
 
 [[package]]
 name = "png"
@@ -4630,14 +4642,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "vitronix"
-version = "0.1.0"
-dependencies = [
- "dioxus",
- "gtk",
-]
 
 [[package]]
 name = "walkdir"
