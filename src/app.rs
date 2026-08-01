@@ -5,7 +5,7 @@ use crate::{
 	layout::Layout,
 	window::{TitleBar, Window, WindowContent},
 };
-use dioxus::{desktop::use_window, prelude::*};
+use dioxus::prelude::*;
 
 #[derive(Clone)]
 pub struct CustomStartupFinished(pub Signal<bool>);
@@ -21,21 +21,11 @@ impl Deref for CustomStartupFinished {
 #[component]
 pub fn App() -> Element {
 	debug!("rendering App component");
-	let config: Config = use_context::<Config>();
-	let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
-	let ctx = use_window();
-	use_effect(move || {
-		let win = &ctx.window;
-
-		// #[cfg(target_os = "linux")]
-		// {
-		// 	use crate::window::set_gtk_background_color;
-		// 	let (r, g, b) = config.initial_theme.background_rgb();
-		// 	set_gtk_background_color(r, g, b, win.clone());
-		// }
-	});
+	let config = use_context::<Config>();
+	let custom_startup_finished =
+		use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
 	let window = rsx! {
-		Window{
+		Window {
 			title: &config.window.title,
 			window_type: config.window.window_type.clone(),
 			TitleBar {
@@ -44,9 +34,7 @@ pub fn App() -> Element {
 				}),
 				title: &config.window.title,
 			}
-			WindowContent {
-				Layout {}
-			}
+			WindowContent { Layout {} }
 		}
 	};
 	rsx! {

@@ -12,7 +12,7 @@ pub enum WindowType {
 		resizable: bool,
 	},
 }
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct WindowConfig {
 	pub title: String,
 	pub decorations: bool,
@@ -29,7 +29,7 @@ impl Default for WindowConfig {
 	}
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq)]
 pub struct Config {
 	pub window: WindowConfig,
 	pub startup: Option<fn() -> Element>, //	for custom startup flow

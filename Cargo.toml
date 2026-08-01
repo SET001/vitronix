@@ -4,6 +4,5 @@ name = "vitronix"
 version = "0.1.0"
 
 [dependencies]
-dioxus = { version = "0.7", features = ["desktop"] }
-[target.'cfg(target_os = "linux")'.dependencies]
-gtk = "0.18"
+dioxus = "0.7"
+dioxus-native = "0.7"
