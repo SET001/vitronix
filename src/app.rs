@@ -3,7 +3,7 @@ use std::ops::Deref;
 use crate::{
 	config::Config,
 	layout::Layout,
-	window::{TitleBar, Window},
+	window::{TitleBar, Window, WindowContent},
 };
 use dioxus::{desktop::use_window, prelude::*};
 
@@ -41,7 +41,9 @@ pub fn App() -> Element {
 			TitleBar {
 				title: &config.window.title,
 			}
-			Layout {}
+			WindowContent {
+				Layout {}
+			}
 		}
 	};
 	rsx! {

@@ -49,7 +49,7 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 
 	rsx! {
 		div {
-			class: "text-on-surface bg-surface border-on-surface border-2 rounded-lg w-screen h-screen overflow-hidden",
+			class: "window",
 			if resizeable {
 				ResizeHandles{}
 			}
@@ -59,6 +59,15 @@ pub fn Window(title: String, window_type: WindowType, children: Element) -> Elem
 	}
 }
 
+#[component]
+pub fn WindowContent(children: Element) -> Element {
+	rsx! {
+		div {
+			class: "window-content",
+			{children}
+		}
+	}
+}
 #[derive(Clone, PartialEq, Props, Debug)]
 pub struct TitleBarProp {
 	title: String,
@@ -102,6 +111,7 @@ pub fn TitleBar(props: TitleBarProp) -> Element {
 
 	rsx! {
 		div {
+			class: "title-bar flex",
 			onmousedown: use_drag_window(),
 			{icon}
 			{props.title}

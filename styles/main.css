@@ -12,4 +12,17 @@ html, body, #main {
 @theme inline {
 	--color-surface: var(--color-surface);
 	--color-on-surface: var(--color-on-surface);
+	--radius: var(--radius);
+	--spacing: var(--spacing);
+	--spacing-2: var(--spacing-2);
+}
+
+.window{
+	@apply text-on-surface bg-surface border-on-surface border-1 rounded w-screen h-screen overflow-hidden
+}
+.window .title-bar{
+	@apply border-b-1 p-2
+}
+.window-content{
+	@apply p-1
 }

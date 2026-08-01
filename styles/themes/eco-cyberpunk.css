@@ -1,4 +1,7 @@
 :root{
 	--color-on-surface: #d0ce49;
-	--color-surface: #151715;
+	--color-surface: #151715d4;
+	--radius: 10px;
+	--spacing: 10px;
+	--spacing-2: 5px;
 }
