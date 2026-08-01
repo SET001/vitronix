@@ -14,15 +14,18 @@ html, body, #main {
 	--color-on-surface: var(--color-on-surface);
 	--radius: var(--radius);
 	--spacing: var(--spacing);
-	--spacing-2: var(--spacing-2);
 }
 
 .window{
 	@apply text-on-surface bg-surface border-on-surface border-1 rounded w-screen h-screen overflow-hidden
 }
 .window .title-bar{
-	@apply border-b-1 p-2
+	@apply border-b-1 flex items-center py-1 px-5 gap-2
+}
+.window .title-bar img {
+	height: 1em;
+	width: auto;
 }
 .window-content{
-	@apply p-1
+	@apply p-4
 }

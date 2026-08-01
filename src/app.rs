@@ -39,6 +39,9 @@ pub fn App() -> Element {
 			title: &config.window.title,
 			window_type: config.window.window_type.clone(),
 			TitleBar {
+				icon: Some(rsx! {
+					img { src: asset!("/assets/logo_sample3.png") }
+				}),
 				title: &config.window.title,
 			}
 			WindowContent {
@@ -47,7 +50,7 @@ pub fn App() -> Element {
 		}
 	};
 	rsx! {
-		style { {include_str!("../assets/styles.css")} }
+		document::Stylesheet { href: asset!("/assets/styles.css") }
 		if let Some(Startup) = config.startup {
 			if !*custom_startup_finished.read() {
 				Startup {}

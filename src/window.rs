@@ -71,7 +71,7 @@ pub fn WindowContent(children: Element) -> Element {
 #[derive(Clone, PartialEq, Props, Debug)]
 pub struct TitleBarProp {
 	title: String,
-	icon: Option<String>,
+	icon: Option<Element>,
 	#[props(default = true)]
 	closeable: bool,
 	#[props(default = true)]
@@ -89,11 +89,6 @@ pub struct TitleBarProp {
 pub fn TitleBar(props: TitleBarProp) -> Element {
 	debug!("rendering TitleBar component with props: {:?}", props);
 	let window = use_window();
-	let icon = props.icon.map(|icon| {
-		rsx! {
-			img { src: "{icon}" }
-		}
-	});
 
 	let close_button = props.closeable.then(|| {
 		rsx! {
@@ -111,11 +106,17 @@ pub fn TitleBar(props: TitleBarProp) -> Element {
 
 	rsx! {
 		div {
-			class: "title-bar flex",
+			class: "title-bar",
 			onmousedown: use_drag_window(),
-			{icon}
-			{props.title}
-			{close_button}
+			div {
+				class: "flex items-center gap-2 min-w-0",
+				{props.icon}
+				span { class: "truncate leading-none", {props.title} }
+			}
+			div {
+				class: "flex items-center gap-1 ml-auto",
+				{close_button}
+			}
 		}
 	}
 }
