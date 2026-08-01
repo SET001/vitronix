@@ -1,12 +1,10 @@
 use dioxus::prelude::*;
 
-use crate::config::Config;
-
 #[component]
 pub fn Layout() -> Element {
 	debug!("rendering Layout component");
 
-	let config = use_context::<Config>();
+	// let config = use_context::<RunConfig>();
 
 	rsx! {
 		div { "vitronix app" }

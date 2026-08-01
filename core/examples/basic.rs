@@ -1,12 +1,18 @@
-use core::config::{Config, WindowConfig};
-use core::runner::run;
+use vitronix::plugin::Plugin;
+use vitronix::runner::{RunConfig, WindowConfig, run};
 
 fn main() {
-	run(Config {
-		window: WindowConfig {
-			title: "Vitronix basic example".to_string(),
-			..Default::default()
-		},
+	run(RunConfig {
+		window: WindowConfig::default().add_title_part("Basic example"),
+		plugins: vec![plugin],
 		..Default::default()
 	});
+}
+
+pub fn plugin() -> Plugin {
+	Plugin {
+		name: "basic_plugin",
+		description: Some("A basic plugin example"),
+		..Default::default()
+	}
 }

@@ -1,12 +1,9 @@
-use core::{
-	config::{Config, WindowConfig, WindowType},
-	runner::run,
-};
+use vitronix::runner::{RunConfig, WindowConfig, run};
+use vitronix::window::WindowType;
 
 fn main() {
-	run(Config {
+	run(RunConfig {
 		window: WindowConfig {
-			title: "Vitronix splash screen example".to_string(),
 			window_type: WindowType::Sized {
 				width: 800.0,
 				height: 600.0,
@@ -14,7 +11,8 @@ fn main() {
 				resizable: true,
 			},
 			..Default::default()
-		},
+		}
+		.add_title_part("Simple modal example"),
 		..Default::default()
 	});
 }

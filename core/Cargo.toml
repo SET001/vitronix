@@ -3,8 +3,14 @@ edition = "2024"
 name = "core"
 version = "0.1.0"
 
+[lib]
+name = "vitronix"
+
 [dependencies]
 dioxus.workspace = true
+dirs.workspace = true
+indexmap.workspace = true
+libloading = "0.8"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18"

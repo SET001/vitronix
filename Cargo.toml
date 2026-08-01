@@ -1,6 +1,11 @@
 [workspace]
-members = ["core", "plugins"]
+members = ["core", "plugins/*"]
 resolver = "2"
+
+[workspace.package]
+name = "vitronix"
 
 [workspace.dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }
+dirs = "5.0"
+indexmap = "2"

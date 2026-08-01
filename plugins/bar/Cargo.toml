@@ -1,0 +1,11 @@
+[package]
+edition = "2024"
+name = "bar"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+dioxus.workspace = true
+vitronix = { path = "../../core", package = "core" }

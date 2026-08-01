@@ -1,9 +1,19 @@
 use crate::{
 	ResizeHandles,
-	config::WindowType,
 	window_utils::{align_center, set_floatable, use_drag_window},
 };
 use dioxus::{desktop::use_window, prelude::*};
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum WindowType {
+	Maximized,
+	Sized {
+		width: f32,
+		height: f32,
+		position: Option<(f32, f32)>,
+		resizable: bool,
+	},
+}
 
 #[component]
 pub fn Window(title: String, window_type: WindowType, children: Element) -> Element {
