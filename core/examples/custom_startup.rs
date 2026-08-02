@@ -2,16 +2,18 @@
  * This example shows how to create a custom flow before the main app is rendered. In this example, we will show a splash screen before the main app is rendered.
  */
 use dioxus::prelude::*;
-use vitronix::{CustomStartupFinished, window::Window};
+use vitronix::runner::{RunConfig, WindowConfig};
+use vitronix::{
+	CustomStartupFinished,
+	runner::run,
+	window::{Window, WindowType},
+};
 
 #[cfg(target_os = "linux")]
 use vitronix::window_utils::use_drag_window;
 fn main() {
-	vitronix::runner::run(vitronix::config::Config {
-		window: vitronix::config::WindowConfig {
-			title: "Vitronix splash screen example".to_string(),
-			..Default::default()
-		},
+	run(RunConfig {
+		window: WindowConfig::default().add_title_part("Custom startup example"),
 		startup: Some(App),
 		..Default::default()
 	});
@@ -26,7 +28,7 @@ pub fn App() -> Element {
 	rsx! {
 		Window{
 			title: "Vitronix custom startup example".to_string(),
-			window_type: vitronix::config::WindowType::Sized {
+			window_type: WindowType::Sized {
 				width: 800.0,
 				height: 600.0,
 				position: None,
