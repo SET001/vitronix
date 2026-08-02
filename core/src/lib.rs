@@ -1,6 +1,8 @@
 mod app;
 mod config;
 mod layout;
+mod panel;
+mod tool;
 
 pub mod plugin;
 pub mod runner;
