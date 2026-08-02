@@ -4,7 +4,7 @@ use std::{ops::Deref, sync::OnceLock};
 
 use crate::{
 	layout::Layout,
-	plugin::Plugin,
+	plugin::{Plugin, use_dyn_plugins},
 	runner::RunConfig,
 	window::{TitleBar, Window, WindowContent},
 };
@@ -60,8 +60,9 @@ impl Deref for CustomStartupFinished {
 #[component]
 pub fn App() -> Element {
 	debug!("rendering App component");
-	let plugins = PLUGINS.get_or_init(load_plugins);
 	let config: RunConfig = use_context::<RunConfig>();
+	let plugins = use_dyn_plugins(config.plugins_path);
+
 	let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
 	let ctx = use_window();
 	use_effect(move || {

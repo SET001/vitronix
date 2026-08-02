@@ -1,8 +1,12 @@
 use crate::{
-	FRAMEWORK_NAME, WINDOW_BACKGROUND_COLOR, WINDOW_TITLE_PARTS_SEPARATOR, app::App, plugin::PluginDescriptor, theme::Theme,
+	FRAMEWORK_NAME, WINDOW_BACKGROUND_COLOR, WINDOW_TITLE_PARTS_SEPARATOR,
+	app::App,
+	plugin::{PluginDescriptor, plugin_dir},
+	theme::Theme,
 	window::WindowType,
 };
 use dioxus::core::Element;
+use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct WindowConfig {
@@ -33,12 +37,25 @@ impl WindowConfig {
 		self.clone()
 	}
 }
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct RunConfig {
 	pub window: WindowConfig,
 	pub startup: Option<fn() -> Element>, //	for custom startup flow
 	pub initial_theme: Option<Theme>,
 	pub plugins: Vec<PluginDescriptor>,
+	pub plugins_path: Option<PathBuf>, // None disables dynamic plugin loading
+}
+
+impl Default for RunConfig {
+	fn default() -> Self {
+		Self {
+			window: WindowConfig::default(),
+			startup: None,
+			initial_theme: None,
+			plugins: vec![],
+			plugins_path: Some(plugin_dir()),
+		}
+	}
 }
 
 pub fn run(config: RunConfig) {
