@@ -2,8 +2,9 @@ use std::path::PathBuf;
 
 use dioxus::prelude::*;
 use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
 
-use crate::{FRAMEWORK_NAME, PLUGIN_DIR_NAME, state::PersistentState};
+use crate::{PLUGIN_DIR_NAME, state::PersistentState};
 
 pub type PluginComponent = fn() -> Element;
 pub type PluginBuilder = fn() -> Plugin;
@@ -31,6 +32,7 @@ pub struct PluginState {
 	pub is_required: bool,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct PluginPersistentState {
 	pub is_enabled: bool,
 	pub is_required: bool,

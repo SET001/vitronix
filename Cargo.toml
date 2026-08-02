@@ -8,4 +8,6 @@ name = "vitronix"
 [workspace.dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }
 dirs = "5.0"
-indexmap = "2"
+indexmap = { version = "2", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
