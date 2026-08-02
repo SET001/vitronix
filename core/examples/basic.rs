@@ -1,10 +1,13 @@
-use vitronix::plugin::Plugin;
+use vitronix::plugin::{Plugin, PluginDescriptor};
 use vitronix::runner::{RunConfig, WindowConfig, run};
 
 fn main() {
 	run(RunConfig {
 		window: WindowConfig::default().add_title_part("Basic example"),
-		plugins: vec![plugin],
+		plugins: vec![PluginDescriptor {
+			builder: plugin,
+			required: false,
+		}],
 		..Default::default()
 	});
 }

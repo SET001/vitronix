@@ -1,5 +1,5 @@
 use crate::{
-	FRAMEWORK_NAME, WINDOW_BACKGROUND_COLOR, WINDOW_TITLE_PARTS_SEPARATOR, app::App, plugin::PluginBuilder, theme::Theme,
+	FRAMEWORK_NAME, WINDOW_BACKGROUND_COLOR, WINDOW_TITLE_PARTS_SEPARATOR, app::App, plugin::PluginDescriptor, theme::Theme,
 	window::WindowType,
 };
 use dioxus::core::Element;
@@ -38,7 +38,7 @@ pub struct RunConfig {
 	pub window: WindowConfig,
 	pub startup: Option<fn() -> Element>, //	for custom startup flow
 	pub initial_theme: Option<Theme>,
-	pub plugins: Vec<PluginBuilder>,
+	pub plugins: Vec<PluginDescriptor>,
 }
 
 pub fn run(config: RunConfig) {
