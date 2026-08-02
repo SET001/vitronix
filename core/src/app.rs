@@ -1,45 +1,19 @@
 #![allow(unpredictable_function_pointer_comparisons)]
 
-use std::{ops::Deref, sync::OnceLock};
+use std::collections::HashSet;
 
+use crate::state::PersistentState;
 use crate::{
 	layout::Layout,
-	plugin::{Plugin, use_dyn_plugins},
+	plugin::{Plugin, PluginState, load_dyn_plugins, merge_plugins},
 	runner::RunConfig,
+	state::{load_app_state, save_app_state},
 	window::{TitleBar, Window, WindowContent},
 };
 use dioxus::{desktop::use_window, prelude::*};
+use indexmap::IndexMap;
 
-static PLUGINS: OnceLock<Vec<Plugin>> = OnceLock::new();
-
-fn load_plugins() -> Vec<Plugin> {
-	let plugin_names = ["foo", "bar"];
-	let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../target/debug");
-
-	plugin_names
-		.iter()
-		.filter_map(|name| {
-			let path = dir.join(libloading::library_filename(name));
-			unsafe {
-				match libloading::Library::new(&path) {
-					Ok(lib) => {
-						let plugin = {
-							let create: libloading::Symbol<fn() -> Plugin> =
-								lib.get(b"create_plugin").expect("create_plugin symbol not found");
-							create()
-						};
-						std::mem::forget(lib);
-						Some(plugin)
-					}
-					Err(e) => {
-						eprintln!("[vitronix] failed to load {}: {e}", path.display());
-						None
-					}
-				}
-			}
-		})
-		.collect()
-}
+pub type PluginMap = IndexMap<String, (Plugin, PluginState)>;
 
 #[component]
 fn PluginHost(entry: fn() -> Element) -> Element {
@@ -49,7 +23,7 @@ fn PluginHost(entry: fn() -> Element) -> Element {
 #[derive(Clone)]
 pub struct CustomStartupFinished(pub Signal<bool>);
 
-impl Deref for CustomStartupFinished {
+impl std::ops::Deref for CustomStartupFinished {
 	type Target = Signal<bool>;
 
 	fn deref(&self) -> &Self::Target {
@@ -61,7 +35,38 @@ impl Deref for CustomStartupFinished {
 pub fn App() -> Element {
 	debug!("rendering App component");
 	let config: RunConfig = use_context::<RunConfig>();
-	let plugins = use_dyn_plugins(config.plugins_path);
+
+	let plugins: Signal<PluginMap> = use_hook(|| {
+		let app_state = load_app_state(&config.app_name);
+		let required_names: HashSet<&str> = config
+			.plugins
+			.iter()
+			.filter(|d| d.required)
+			.map(|d| (d.builder)().name)
+			.collect();
+		let mut all_plugins: Vec<Plugin> = config.plugins.iter().map(|d| (d.builder)()).collect();
+		if let Some(ref path) = config.plugins_path {
+			all_plugins.extend(load_dyn_plugins(path));
+		}
+		let merged = merge_plugins(all_plugins, &required_names, &app_state);
+		// persist initial state so newly discovered plugins are written immediately
+		let initial_state = crate::state::AppPersistentState {
+			plugins: merged.iter().map(|(name, (_, ps))| (name.clone(), ps.to_stored())).collect(),
+		};
+		save_app_state(&config.app_name, &initial_state);
+		Signal::new(merged)
+	});
+
+	use_context_provider(|| plugins);
+
+	// persist any newly discovered plugins and react to state changes
+	use_effect(move || {
+		let state = plugins.read();
+		let app_state = crate::state::AppPersistentState {
+			plugins: state.iter().map(|(name, (_, ps))| (name.clone(), ps.to_stored())).collect(),
+		};
+		save_app_state(&config.app_name, &app_state);
+	});
 
 	let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
 	let ctx = use_window();

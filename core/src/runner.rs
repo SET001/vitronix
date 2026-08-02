@@ -39,6 +39,7 @@ impl WindowConfig {
 }
 #[derive(Clone)]
 pub struct RunConfig {
+	pub app_name: String,
 	pub window: WindowConfig,
 	pub startup: Option<fn() -> Element>, //	for custom startup flow
 	pub initial_theme: Option<Theme>,
@@ -49,6 +50,7 @@ pub struct RunConfig {
 impl Default for RunConfig {
 	fn default() -> Self {
 		Self {
+			app_name: FRAMEWORK_NAME.to_string(),
 			window: WindowConfig::default(),
 			startup: None,
 			initial_theme: None,

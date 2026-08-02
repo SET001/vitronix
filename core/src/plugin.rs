@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use dioxus::prelude::*;
 use indexmap::IndexMap;
@@ -66,6 +66,34 @@ impl PluginManager {
 	}
 }
 
+pub fn merge_plugins(
+	plugins: Vec<Plugin>,
+	required_names: &std::collections::HashSet<&str>,
+	app_state: &crate::state::AppPersistentState,
+) -> IndexMap<String, (Plugin, PluginState)> {
+	plugins
+		.into_iter()
+		.map(|plugin| {
+			let name = plugin.name.to_string();
+			let is_required = required_names.contains(plugin.name);
+			let state = match app_state.plugins.get(&name) {
+				Some(stored) => PluginState {
+					is_enabled: stored.is_enabled,
+					is_initialized: false,
+					// descriptor overrides persisted value for static plugins
+					is_required: is_required || stored.is_required,
+				},
+				None => PluginState {
+					is_enabled: true,
+					is_initialized: false,
+					is_required,
+				},
+			};
+			(name, (plugin, state))
+		})
+		.collect()
+}
+
 pub fn plugin_dir() -> std::path::PathBuf {
 	std::env::current_exe()
 		.expect("failed to resolve executable path")
@@ -93,35 +121,26 @@ pub fn scan_plugin_files(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
 		.unwrap_or_default()
 }
 
-pub fn use_dyn_plugins(path: Option<PathBuf>) -> Signal<Vec<(Plugin, PluginState)>> {
-	let plugins = use_hook(|| match path {
-		Some(path) => {
-			let plugin_names = scan_plugin_files(&path);
-			plugin_names.iter().for_each(|plugin_path| unsafe {
-				match libloading::Library::new(&plugin_path) {
-					Ok(lib) => {
-						let plugin = {
-							let create: libloading::Symbol<fn() -> Plugin> =
-								lib.get(b"create_plugin").expect("create_plugin symbol not found");
-							create()
-						};
-						std::mem::forget(lib);
-						info!("loaded plugin {} from {}", plugin.name, plugin_path.display());
-					}
-					Err(e) => {
-						error!("[vitronix] failed to load {}: {e}", plugin_path.display());
-					}
+pub fn load_dyn_plugins(path: &Path) -> Vec<Plugin> {
+	scan_plugin_files(path)
+		.into_iter()
+		.filter_map(|plugin_path| unsafe {
+			match libloading::Library::new(&plugin_path) {
+				Ok(lib) => {
+					let plugin = {
+						let create: libloading::Symbol<fn() -> Plugin> =
+							lib.get(b"create_plugin").expect("create_plugin symbol not found");
+						create()
+					};
+					std::mem::forget(lib);
+					info!("loaded plugin {} from {}", plugin.name, plugin_path.display());
+					Some(plugin)
 				}
-			});
-			// info!(
-			// 	"{} found {} plugin files in {}",
-			// 	FRAMEWORK_NAME,
-			// 	plugin_names.len(),
-			// 	path.display()
-			// );
-			vec![]
-		}
-		None => vec![],
-	});
-	Signal::new(plugins)
+				Err(e) => {
+					error!("failed to load {}: {e}", plugin_path.display());
+					None
+				}
+			}
+		})
+		.collect()
 }
