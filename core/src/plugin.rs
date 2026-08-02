@@ -8,6 +8,7 @@ use crate::{PLUGIN_DIR_NAME, state::PersistentState};
 
 pub type PluginComponent = fn() -> Element;
 pub type PluginBuilder = fn() -> Plugin;
+pub type PluginMap = IndexMap<String, (Plugin, PluginState)>;
 
 #[derive(Clone)]
 pub struct PluginDescriptor {
@@ -52,15 +53,6 @@ impl PersistentState for PluginState {
 			is_initialized: false,
 			is_required: false, // set from PluginDescriptor for static plugins
 		}
-	}
-}
-pub struct PluginManager {
-	pub plugins: IndexMap<&'static str, (Plugin, PluginState)>,
-}
-
-impl PluginManager {
-	pub fn list_dyn_plugins() -> Vec<String> {
-		todo!()
 	}
 }
 
@@ -115,10 +107,7 @@ pub fn load_dyn_plugins(path: &Path) -> Vec<Plugin> {
 		.collect()
 }
 
-pub fn use_plugins(
-	config: &crate::runner::RunConfig,
-	app_state: &crate::state::AppPersistentState,
-) -> Signal<IndexMap<String, (Plugin, PluginState)>> {
+pub fn use_plugins(config: &crate::runner::RunConfig, app_state: &crate::state::AppPersistentState) -> Signal<PluginMap> {
 	use_hook(|| {
 		let basic_plugins: Vec<(String, Plugin, PluginState)> = config
 			.plugins
@@ -153,10 +142,10 @@ pub fn use_plugins(
 			.collect();
 
 		let all: Vec<(String, Plugin, PluginState)> = [basic_plugins, dyn_plugins].concat();
-		let lookup: IndexMap<String, (Plugin, PluginState)> = all.into_iter().map(|(name, p, s)| (name, (p, s))).collect();
+		let lookup: PluginMap = all.into_iter().map(|(name, p, s)| (name, (p, s))).collect();
 
 		// known plugins in app_state order first, then new ones appended
-		let mut merged: IndexMap<String, (Plugin, PluginState)> = app_state
+		let mut merged: PluginMap = app_state
 			.plugins
 			.keys()
 			.filter_map(|name| lookup.get(name).map(|e| (name.clone(), e.clone())))

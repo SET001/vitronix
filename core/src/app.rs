@@ -3,15 +3,12 @@
 use crate::state::PersistentState;
 use crate::{
 	layout::Layout,
-	plugin::{Plugin, PluginState, use_plugins},
+	plugin::use_plugins,
 	runner::RunConfig,
 	state::{AppPersistentState, load_app_state, save_app_state},
 	window::{TitleBar, Window, WindowContent},
 };
 use dioxus::{desktop::use_window, prelude::*};
-use indexmap::IndexMap;
-
-pub type PluginMap = IndexMap<String, (Plugin, PluginState)>;
 
 #[component]
 fn PluginHost(entry: fn() -> Element) -> Element {
