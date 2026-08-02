@@ -35,7 +35,6 @@ pub struct PluginState {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PluginPersistentState {
 	pub is_enabled: bool,
-	pub is_required: bool,
 }
 
 impl PersistentState for PluginState {
@@ -44,7 +43,6 @@ impl PersistentState for PluginState {
 	fn to_stored(&self) -> Self::Stored {
 		PluginPersistentState {
 			is_enabled: self.is_enabled,
-			is_required: self.is_required,
 		}
 	}
 
@@ -52,7 +50,7 @@ impl PersistentState for PluginState {
 		Self {
 			is_enabled: stored.is_enabled,
 			is_initialized: false,
-			is_required: stored.is_required,
+			is_required: false, // set from PluginDescriptor for static plugins
 		}
 	}
 }
@@ -64,34 +62,6 @@ impl PluginManager {
 	pub fn list_dyn_plugins() -> Vec<String> {
 		todo!()
 	}
-}
-
-pub fn merge_plugins(
-	plugins: Vec<Plugin>,
-	required_names: &std::collections::HashSet<&str>,
-	app_state: &crate::state::AppPersistentState,
-) -> IndexMap<String, (Plugin, PluginState)> {
-	plugins
-		.into_iter()
-		.map(|plugin| {
-			let name = plugin.name.to_string();
-			let is_required = required_names.contains(plugin.name);
-			let state = match app_state.plugins.get(&name) {
-				Some(stored) => PluginState {
-					is_enabled: stored.is_enabled,
-					is_initialized: false,
-					// descriptor overrides persisted value for static plugins
-					is_required: is_required || stored.is_required,
-				},
-				None => PluginState {
-					is_enabled: true,
-					is_initialized: false,
-					is_required,
-				},
-			};
-			(name, (plugin, state))
-		})
-		.collect()
 }
 
 pub fn plugin_dir() -> std::path::PathBuf {
@@ -143,4 +113,64 @@ pub fn load_dyn_plugins(path: &Path) -> Vec<Plugin> {
 			}
 		})
 		.collect()
+}
+
+pub fn use_plugins(
+	config: &crate::runner::RunConfig,
+	app_state: &crate::state::AppPersistentState,
+) -> Signal<IndexMap<String, (Plugin, PluginState)>> {
+	use_hook(|| {
+		let basic_plugins: Vec<(String, Plugin, PluginState)> = config
+			.plugins
+			.iter()
+			.map(|d| {
+				let plugin = (d.builder)();
+				let is_enabled = app_state.plugins.get(plugin.name).map_or(true, |s| s.is_enabled);
+				let state = PluginState {
+					is_enabled,
+					is_initialized: false,
+					is_required: d.required,
+				};
+				(plugin.name.to_string(), plugin, state)
+			})
+			.collect();
+
+		let dyn_plugins: Vec<(String, Plugin, PluginState)> = config
+			.plugins_path
+			.as_deref()
+			.map(load_dyn_plugins)
+			.unwrap_or_default()
+			.into_iter()
+			.map(|plugin| {
+				let is_enabled = app_state.plugins.get(plugin.name).map_or(true, |s| s.is_enabled);
+				let state = PluginState {
+					is_enabled,
+					is_initialized: false,
+					is_required: false,
+				};
+				(plugin.name.to_string(), plugin, state)
+			})
+			.collect();
+
+		let all: Vec<(String, Plugin, PluginState)> = [basic_plugins, dyn_plugins].concat();
+		let lookup: IndexMap<String, (Plugin, PluginState)> = all.into_iter().map(|(name, p, s)| (name, (p, s))).collect();
+
+		// known plugins in app_state order first, then new ones appended
+		let mut merged: IndexMap<String, (Plugin, PluginState)> = app_state
+			.plugins
+			.keys()
+			.filter_map(|name| lookup.get(name).map(|e| (name.clone(), e.clone())))
+			.collect();
+		for (name, entry) in lookup {
+			merged.entry(name).or_insert(entry);
+		}
+
+		crate::state::save_app_state(
+			&config.app_name,
+			&crate::state::AppPersistentState {
+				plugins: merged.iter().map(|(n, (_, ps))| (n.clone(), ps.to_stored())).collect(),
+			},
+		);
+		Signal::new(merged)
+	})
 }

@@ -1,11 +1,9 @@
 #![allow(unpredictable_function_pointer_comparisons)]
 
-use std::collections::HashSet;
-
 use crate::state::PersistentState;
 use crate::{
 	layout::Layout,
-	plugin::{Plugin, PluginState, load_dyn_plugins, merge_plugins},
+	plugin::{Plugin, PluginState, use_plugins},
 	runner::RunConfig,
 	state::{AppPersistentState, load_app_state, save_app_state},
 	window::{TitleBar, Window, WindowContent},
@@ -14,29 +12,6 @@ use dioxus::{desktop::use_window, prelude::*};
 use indexmap::IndexMap;
 
 pub type PluginMap = IndexMap<String, (Plugin, PluginState)>;
-
-fn use_plugins(config: &RunConfig, app_state: &AppPersistentState) -> Signal<PluginMap> {
-	use_hook(|| {
-		let required_names: HashSet<&str> = config
-			.plugins
-			.iter()
-			.filter(|d| d.required)
-			.map(|d| (d.builder)().name)
-			.collect();
-		let mut all_plugins: Vec<Plugin> = config.plugins.iter().map(|d| (d.builder)()).collect();
-		if let Some(ref path) = config.plugins_path {
-			all_plugins.extend(load_dyn_plugins(path));
-		}
-		let merged = merge_plugins(all_plugins, &required_names, app_state);
-		save_app_state(
-			&config.app_name,
-			&AppPersistentState {
-				plugins: merged.iter().map(|(n, (_, ps))| (n.clone(), ps.to_stored())).collect(),
-			},
-		);
-		Signal::new(merged)
-	})
-}
 
 #[component]
 fn PluginHost(entry: fn() -> Element) -> Element {
