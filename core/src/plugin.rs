@@ -32,7 +32,7 @@ pub struct PluginState {
 	pub is_required: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct PluginPersistentState {
 	pub is_enabled: bool,
 	pub is_required: bool,

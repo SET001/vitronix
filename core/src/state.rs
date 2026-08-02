@@ -8,7 +8,7 @@ pub trait PersistentState {
 	fn from_stored(stored: Self::Stored) -> Self;
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct AppPersistentState {
 	pub plugins: IndexMap<String, PluginPersistentState>,
 }

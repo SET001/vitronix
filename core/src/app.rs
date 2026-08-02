@@ -7,13 +7,36 @@ use crate::{
 	layout::Layout,
 	plugin::{Plugin, PluginState, load_dyn_plugins, merge_plugins},
 	runner::RunConfig,
-	state::{load_app_state, save_app_state},
+	state::{AppPersistentState, load_app_state, save_app_state},
 	window::{TitleBar, Window, WindowContent},
 };
 use dioxus::{desktop::use_window, prelude::*};
 use indexmap::IndexMap;
 
 pub type PluginMap = IndexMap<String, (Plugin, PluginState)>;
+
+fn use_plugins(config: &RunConfig, app_state: &AppPersistentState) -> Signal<PluginMap> {
+	use_hook(|| {
+		let required_names: HashSet<&str> = config
+			.plugins
+			.iter()
+			.filter(|d| d.required)
+			.map(|d| (d.builder)().name)
+			.collect();
+		let mut all_plugins: Vec<Plugin> = config.plugins.iter().map(|d| (d.builder)()).collect();
+		if let Some(ref path) = config.plugins_path {
+			all_plugins.extend(load_dyn_plugins(path));
+		}
+		let merged = merge_plugins(all_plugins, &required_names, app_state);
+		save_app_state(
+			&config.app_name,
+			&AppPersistentState {
+				plugins: merged.iter().map(|(n, (_, ps))| (n.clone(), ps.to_stored())).collect(),
+			},
+		);
+		Signal::new(merged)
+	})
+}
 
 #[component]
 fn PluginHost(entry: fn() -> Element) -> Element {
@@ -35,43 +58,24 @@ impl std::ops::Deref for CustomStartupFinished {
 pub fn App() -> Element {
 	debug!("rendering App component");
 	let config: RunConfig = use_context::<RunConfig>();
-
-	let plugins: Signal<PluginMap> = use_hook(|| {
-		let app_state = load_app_state(&config.app_name);
-		let required_names: HashSet<&str> = config
-			.plugins
-			.iter()
-			.filter(|d| d.required)
-			.map(|d| (d.builder)().name)
-			.collect();
-		let mut all_plugins: Vec<Plugin> = config.plugins.iter().map(|d| (d.builder)()).collect();
-		if let Some(ref path) = config.plugins_path {
-			all_plugins.extend(load_dyn_plugins(path));
-		}
-		let merged = merge_plugins(all_plugins, &required_names, &app_state);
-		// persist initial state so newly discovered plugins are written immediately
-		let initial_state = crate::state::AppPersistentState {
-			plugins: merged.iter().map(|(name, (_, ps))| (name.clone(), ps.to_stored())).collect(),
-		};
-		save_app_state(&config.app_name, &initial_state);
-		Signal::new(merged)
-	});
-
+	let app_state = use_hook(|| load_app_state(&config.app_name));
+	let plugins = use_plugins(&config, &app_state);
 	use_context_provider(|| plugins);
 
-	// persist any newly discovered plugins and react to state changes
 	use_effect(move || {
 		let state = plugins.read();
-		let app_state = crate::state::AppPersistentState {
-			plugins: state.iter().map(|(name, (_, ps))| (name.clone(), ps.to_stored())).collect(),
-		};
-		save_app_state(&config.app_name, &app_state);
+		save_app_state(
+			&config.app_name,
+			&AppPersistentState {
+				plugins: state.iter().map(|(n, (_, ps))| (n.clone(), ps.to_stored())).collect(),
+			},
+		);
 	});
 
 	let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
 	let ctx = use_window();
 	use_effect(move || {
-		let win = &ctx.window;
+		let _win = &ctx.window;
 
 		// #[cfg(target_os = "linux")]
 		// {
@@ -91,9 +95,9 @@ pub fn App() -> Element {
 				title: &config.window.get_title(),
 			}
 			WindowContent {
-				// for plugin in plugins.iter() {
-				// 	PluginHost { entry: plugin.entry }
-				// }
+				for plugin in plugins.read().iter() {
+					PluginHost { entry: plugin.1 .0.entry.unwrap() }
+				}
 				Layout {}
 			}
 		}
