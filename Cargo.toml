@@ -1,6 +1,22 @@
 [workspace]
-members = ["core", "plugins/*"]
+members = ["plugins/*"]
 resolver = "2"
+
+[package]
+edition = "2024"
+name = "vitronix"
+version = "0.1.0"
+
+[dependencies]
+dioxus.workspace = true
+dirs.workspace = true
+indexmap.workspace = true
+libloading = "0.8"
+serde.workspace = true
+toml.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
 
 [workspace.dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }
