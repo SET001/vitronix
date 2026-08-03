@@ -1,4 +1,6 @@
-use crate::tool::Tool;
+use dioxus::signals::default_impl;
+
+use crate::widget::Widget;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum DisplayMode {
@@ -47,13 +49,13 @@ pub enum Panel {
 		resizeable: ResizeAxis,
 		size: Option<(f32, f32)>,
 	},
-	Toolkit {
+	WidgetGroup {
 		id: ResourceId,
 		display_mode: DisplayMode,
 		is_collapsed: Option<bool>,
 		draggable: bool,
 		layout_direction: LayoutDirection,
-		tools: Vec<Tool>,
+		tools: Vec<Widget>,
 	},
 	//	TODO:
 	// pub main_sizing: PanelSizing,

@@ -24,7 +24,7 @@ pub struct Plugin {
 	pub load_config: Option<fn(data: &[u8])>,
 	pub save_config: Option<fn() -> Vec<u8>>,
 	pub dependencies: Vec<&'static str>,
-	pub panels: Vec<Panel>,
+	pub layout: Option<Panel>,
 }
 
 #[derive(Clone)]

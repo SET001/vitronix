@@ -67,9 +67,6 @@ pub fn App() -> Element {
 				title: &config.window.get_title(),
 			}
 			WindowContent {
-				for plugin in plugins.read().iter() {
-					PluginHost { entry: plugin.1 .0.entry.unwrap() }
-				}
 				Layout {}
 			}
 		}

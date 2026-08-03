@@ -1,13 +1,13 @@
 mod app;
 mod config;
 mod layout;
-mod panel;
-mod tool;
 
+pub mod panel;
 pub mod plugin;
 pub mod runner;
 pub mod state;
 pub mod theme;
+pub mod widget;
 pub mod window;
 pub mod window_utils;
 
