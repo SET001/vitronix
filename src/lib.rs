@@ -14,3 +14,5 @@ pub mod window_utils;
 pub use app::CustomStartupFinished;
 pub use config::*;
 pub use window_utils::ResizeHandles;
+
+pub use dioxus;
