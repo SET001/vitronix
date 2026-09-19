@@ -17,7 +17,9 @@ html, body, #main {
 }
 
 .window{
-	@apply text-on-surface bg-surface border-on-surface border-1 rounded w-screen h-screen overflow-hidden
+	@apply text-on-surface bg-surface border-on-surface border-1 rounded w-screen h-screen overflow-hidden;
+	display: flex;
+	flex-direction: column;
 }
 .window .title-bar{
 	@apply border-b-1 flex items-center py-1 px-5 gap-2
