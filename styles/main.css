@@ -2,6 +2,7 @@
 @import "./themes/eco-cyberpunk.css";
 @source "./src/**/*.rs";
 @source "./examples/**/*.rs";
+@import "./form.css";
 
 html, body, #main {
 	background: transparent;
@@ -12,6 +13,8 @@ html, body, #main {
 @theme inline {
 	--color-surface: var(--color-surface);
 	--color-on-surface: var(--color-on-surface);
+	--color-secondary: color-mix(in srgb, var(--color-on-surface) 35%, transparent);
+	--color-accent: color-mix(in srgb, var(--color-on-surface) 55%, transparent);
 	--radius: var(--radius);
 	--spacing: var(--spacing);
 }
