@@ -97,7 +97,7 @@ pub fn RenderBranch(branch: Branch, parent_axis: Axis) -> Element {
 	let (main_class, main_style) = main_sizing_attrs(&branch.main_sizing);
 	let (cross_class, cross_style) = cross_sizing_attrs(&branch.cross_sizing, parent_axis);
 	rsx! {
-		div { class: "{flex_class} {main_class} {cross_class}", style: "{main_style} {cross_style}",
+		div { class: "{flex_class} {main_class} {cross_class} branch", style: "{main_style} {cross_style}",
 			for item in branch.children {
 				{RenderNode(item, own_axis)}
 			}
@@ -117,7 +117,7 @@ pub fn RenderPanel(panel: Panel, parent_axis: Axis) -> Element {
 	let (main_class, main_style) = main_sizing_attrs(&panel.main_sizing);
 	let (cross_class, cross_style) = cross_sizing_attrs(&panel.cross_sizing, parent_axis);
 	rsx! {
-		div { class: "{flex_class} {main_class} {cross_class}", style: "{main_style} {cross_style}",
+		div { class: "{flex_class} {main_class} {cross_class} panel", style: "{main_style} {cross_style}",
 			for widget in panel.tools {
 				{widget}
 			}

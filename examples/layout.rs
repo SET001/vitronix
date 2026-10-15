@@ -1,11 +1,7 @@
 use dioxus::prelude::*;
 use vitronix::{
 	layout::Layout,
-	panel::{
-		Branch, DisplayMode, LayoutDirection,
-		Node::{self, Leaf},
-		Panel, PanelSizing,
-	},
+	panel::{Branch, CrossSizing, LayoutDirection, Node, Panel, PanelSizing},
 	runner::{RunConfig, WindowConfig, run},
 	window::WindowWrapper,
 };
@@ -28,19 +24,47 @@ pub fn App() -> Element {
 				..Default::default()
 			}),
 			Node::Branch(Branch {
-				layout_direction: LayoutDirection::Left,
+				layout_direction: LayoutDirection::Right,
 				main_sizing: PanelSizing::Fill,
 				children: vec![
-					Node::Leaf(Panel {
-						tools: vec![rsx! {"left"}],
+					Node::Branch(Branch {
+						layout_direction: LayoutDirection::Down,
+						main_sizing: PanelSizing::Fill,
+						children: vec![
+							Node::Leaf(Panel {
+								tools: vec![rsx! {"left"}],
+								..Default::default()
+							}),
+							Node::Leaf(Panel {
+								tools: vec![rsx! {"left"}],
+								..Default::default()
+							}),
+							Node::Leaf(Panel {
+								tools: vec![rsx! {"left"}],
+								..Default::default()
+							}),
+						],
+
 						..Default::default()
 					}),
 					Node::Leaf(Panel {
 						tools: vec![rsx! {"middle"}],
 						..Default::default()
 					}),
-					Node::Leaf(Panel {
-						tools: vec![rsx! {"right"}],
+					Node::Branch(Branch {
+						layout_direction: LayoutDirection::Down,
+						cross_sizing: CrossSizing::Content,
+						main_sizing: PanelSizing::Fill,
+						children: vec![
+							Node::Leaf(Panel {
+								tools: vec![rsx! {"right"}],
+								..Default::default()
+							}),
+							Node::Leaf(Panel {
+								tools: vec![rsx! {"right"}],
+								..Default::default()
+							}),
+						],
 						..Default::default()
 					}),
 				],
