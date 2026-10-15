@@ -1,6 +1,6 @@
 mod app;
 mod config;
-mod layout;
+pub mod layout;
 
 pub mod panel;
 pub mod plugin;
@@ -10,6 +10,7 @@ pub mod theme;
 pub mod widget;
 pub mod window;
 pub mod window_utils;
+pub mod workspace;
 
 pub use app::CustomStartupFinished;
 pub use config::*;

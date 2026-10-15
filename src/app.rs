@@ -1,5 +1,7 @@
 #![allow(unpredictable_function_pointer_comparisons)]
 
+use std::process::Child;
+
 use crate::state::PersistentState;
 use crate::{
 	layout::Layout,
@@ -44,7 +46,7 @@ pub fn App() -> Element {
 		);
 	});
 
-	let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
+	// let custom_startup_finished = use_context_provider(|| CustomStartupFinished(Signal::new(config.startup.is_none())));
 	let ctx = use_window();
 	use_effect(move || {
 		let _win = &ctx.window;
@@ -56,31 +58,8 @@ pub fn App() -> Element {
 		// 	set_gtk_background_color(r, g, b, win.clone());
 		// }
 	});
-	let window = rsx! {
-		Window{
-			title: &config.window.get_title(),
-			window_type: config.window.window_type.clone(),
-			TitleBar {
-				icon: Some(rsx! {
-					img { src: asset!("/assets/logo_sample3.png") }
-				}),
-				title: &config.window.get_title(),
-			}
-			WindowContent {
-				Layout {}
-			}
-		}
-	};
 	rsx! {
 		document::Stylesheet { href: asset!("/assets/styles.css") }
-		if let Some(Startup) = config.startup {
-			if !*custom_startup_finished.read() {
-				Startup {}
-			} else {
-				{window}
-			}
-		} else {
-			{window}
-		}
+		{(config.app)()}
 	}
 }

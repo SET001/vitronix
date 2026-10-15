@@ -3,9 +3,9 @@ use crate::{
 	app::App,
 	plugin::{PluginDescriptor, plugin_dir},
 	theme::Theme,
-	window::WindowType,
+	window::{WindowType, WindowWrapper},
 };
-use dioxus::core::Element;
+use dioxus::prelude::*;
 use std::path::PathBuf;
 
 #[derive(Clone)]
@@ -40,19 +40,27 @@ impl WindowConfig {
 #[derive(Clone)]
 pub struct RunConfig {
 	pub app_name: String,
+	pub app: fn() -> Element,
 	pub window: WindowConfig,
-	pub startup: Option<fn() -> Element>, //	for custom startup flow
 	pub initial_theme: Option<Theme>,
 	pub plugins: Vec<PluginDescriptor>,
 	pub plugins_path: Option<PathBuf>, // None disables dynamic plugin loading
 }
 
+#[component]
+pub fn DefaultContent() -> Element {
+	rsx! {
+		WindowWrapper{
+			content: rsx!{"Vitronix App"}
+		}
+	}
+}
 impl Default for RunConfig {
 	fn default() -> Self {
 		Self {
 			app_name: FRAMEWORK_NAME.to_string(),
+			app: DefaultContent,
 			window: WindowConfig::default(),
-			startup: None,
 			initial_theme: None,
 			plugins: vec![],
 			plugins_path: Some(plugin_dir()),

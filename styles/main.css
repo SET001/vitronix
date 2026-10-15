@@ -32,5 +32,5 @@ html, body, #main {
 	width: auto;
 }
 .window-content{
-	@apply p-4
+	@apply p-4 flex flex-1 min-h-0;
 }
