@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{PLUGIN_DIR_NAME, state::PersistentState};
+use crate::{PLUGIN_DIR_NAME, state::PersistentState, workspace::Workspace};
 
 pub type PluginComponent = fn() -> Element;
 pub type PluginBuilder = fn() -> Plugin;
@@ -24,6 +24,7 @@ pub struct Plugin {
 	pub load_config: Option<fn(data: &[u8])>,
 	pub save_config: Option<fn() -> Vec<u8>>,
 	pub dependencies: Vec<&'static str>,
+	pub workspaces: Vec<Workspace>,
 }
 
 #[derive(Clone)]

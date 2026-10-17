@@ -8,4 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 dioxus.workspace = true
-vitronix = { path = "../../core", package = "core" }
+vitronix = { path = "../.." }

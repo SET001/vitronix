@@ -1,0 +1,17 @@
+.form{
+	@apply gap-5
+}
+.form-section{
+	@apply border rounded flex relative p-2 pt-5
+}
+.form-section-label{
+	@apply absolute left-1/2 -translate-x-1/2 bg-surface px-1 px-3;
+	top: -10px
+}
+
+.button{
+	@apply border rounded bg-secondary p-2;
+}
+.button:hover{
+	@apply bg-accent;
+}

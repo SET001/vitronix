@@ -1,4 +1,4 @@
 /target
 /misc
 tailwindcss-linux-x64
-/assets
+**/**/assets

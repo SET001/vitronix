@@ -1,0 +1,5 @@
+[application]
+default_platform = "desktop"
+name = "vitronix"
+tailwind_input = "styles/main.css"
+tailwind_output = "assets/styles.css"

@@ -1,5 +1,6 @@
 use crate::{
 	ResizeHandles,
+	runner::RunConfig,
 	window_utils::{align_center, set_floatable, use_drag_window},
 };
 use dioxus::{desktop::use_window, prelude::*};
@@ -126,6 +127,26 @@ pub fn TitleBar(props: TitleBarProp) -> Element {
 			div {
 				class: "flex items-center gap-1 ml-auto",
 				{close_button}
+			}
+		}
+	}
+}
+
+#[component]
+pub fn WindowWrapper(content: Element) -> Element {
+	let config: RunConfig = use_context::<RunConfig>();
+	rsx! {
+		Window{
+			title: &config.window.get_title(),
+			window_type: config.window.window_type.clone(),
+			TitleBar {
+				icon: Some(rsx! {
+					img { src: asset!("/assets/logo_sample3.png") }
+				}),
+				title: &config.window.get_title(),
+			}
+			WindowContent {
+				{content}
 			}
 		}
 	}
