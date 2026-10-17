@@ -4,7 +4,6 @@
 use dioxus::prelude::*;
 use vitronix::runner::{DefaultContent, RunConfig, WindowConfig};
 use vitronix::{
-	CustomStartupFinished,
 	runner::run,
 	window::{Window, WindowType},
 };
