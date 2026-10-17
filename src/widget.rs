@@ -1,6 +1,6 @@
-use dioxus::prelude::*;
+// use dioxus::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Widget {
-	pub component: fn() -> Element,
+	// pub component: fn() -> Element,
 }

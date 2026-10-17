@@ -1,6 +1,4 @@
-use dioxus::{core::Element, signals::default_impl};
-
-use crate::widget::Widget;
+use dioxus::core::Element;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub enum DisplayMode {

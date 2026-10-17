@@ -1,14 +1,10 @@
 #![allow(unpredictable_function_pointer_comparisons)]
 
-use std::process::Child;
-
 use crate::state::PersistentState;
 use crate::{
-	layout::Layout,
 	plugin::use_plugins,
 	runner::RunConfig,
 	state::{AppPersistentState, load_app_state, save_app_state},
-	window::{TitleBar, Window, WindowContent},
 };
 use dioxus::{desktop::use_window, prelude::*};
 

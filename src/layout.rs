@@ -1,17 +1,13 @@
 use dioxus::prelude::*;
 
-use crate::{
-	panel::{Branch, CrossSizing, DisplayMode, LayoutDirection, Node, Panel, PanelSizing, ResizeAxis},
-	plugin::PluginMap,
-	widget::Widget,
-};
+use crate::panel::{Branch, CrossSizing, LayoutDirection, Node, Panel, PanelSizing};
 
 /// The axis along which a `Branch` arranges its children (derived from its
 /// `layout_direction`). Needed to translate a child's `cross_sizing::Fixed`
 /// into a concrete `height` (row parent) or `width` (column parent) style,
 /// since cross-axis sizing is otherwise direction-agnostic.
 #[derive(Clone, Copy, PartialEq)]
-enum Axis {
+pub enum Axis {
 	Row,
 	Column,
 }
@@ -28,7 +24,7 @@ impl From<&LayoutDirection> for Axis {
 #[component]
 pub fn Layout(layout: Node) -> Element {
 	debug!("rendering Layout component");
-	let plugins = use_context::<Signal<PluginMap>>();
+	// let plugins = use_context::<Signal<PluginMap>>();
 	// let panel = plugins
 	// 	.read()
 	// 	.iter()
@@ -43,12 +39,12 @@ pub fn Layout(layout: Node) -> Element {
 	// The root node has no parent branch to be cross-sized by, so its
 	// `cross_sizing` is effectively moot (Stretch is the sane default here).
 	rsx! {
-		{RenderNode(layout, Axis::Row)}
+		RenderNode{node: layout, parent_axis: Axis::Row}
 	}
 }
-
-fn RenderNode(panel: Node, parent_axis: Axis) -> Element {
-	match panel {
+#[component]
+fn RenderNode(node: Node, parent_axis: Axis) -> Element {
+	match node {
 		Node::Branch(branch) => rsx! { RenderBranch{branch, parent_axis} },
 		Node::Leaf(panel) => rsx! { RenderPanel{panel, parent_axis} },
 	}
@@ -99,7 +95,7 @@ pub fn RenderBranch(branch: Branch, parent_axis: Axis) -> Element {
 	rsx! {
 		div { class: "{flex_class} {main_class} {cross_class} branch", style: "{main_style} {cross_style}",
 			for item in branch.children {
-				{RenderNode(item, own_axis)}
+				RenderNode{node: item, parent_axis: own_axis}
 			}
 		}
 	}

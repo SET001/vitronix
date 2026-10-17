@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{PLUGIN_DIR_NAME, panel::Panel, state::PersistentState, workspace::Workspace};
+use crate::{PLUGIN_DIR_NAME, state::PersistentState, workspace::Workspace};
 
 pub type PluginComponent = fn() -> Element;
 pub type PluginBuilder = fn() -> Plugin;
