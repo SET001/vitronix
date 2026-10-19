@@ -48,6 +48,7 @@ type ResourceId = String;
 #[derive(Default, Clone, PartialEq)]
 pub struct Branch {
 	// id: ResourceId,
+	pub class: String,
 	pub layout_direction: LayoutDirection,
 	pub drop_target: bool,
 	pub children: Vec<Node>,
@@ -61,6 +62,7 @@ pub struct Branch {
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Panel {
+	pub class: String,
 	// id: ResourceId,
 	pub display_mode: DisplayMode,
 	pub is_collapsed: Option<bool>,
