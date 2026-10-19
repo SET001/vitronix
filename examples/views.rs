@@ -77,6 +77,7 @@ fn ViewSwitcher() -> Node {
 	let tabs = rsx! {
 		for (_, view) in views.clone() {
 			div {
+				class: "view-tab",
 				onclick: move |_| {
 					active_view_id.set(view.id.clone());
 				},
@@ -87,6 +88,7 @@ fn ViewSwitcher() -> Node {
 	Node::Branch(Branch {
 		children: vec![
 			Node::Leaf(Panel {
+				class: "gap-7".to_string(),
 				main_sizing: PanelSizing::Content,
 				layout_direction: LayoutDirection::Right,
 				tools: vec![tabs],
