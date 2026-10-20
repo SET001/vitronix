@@ -21,8 +21,14 @@ fn main() {
 #[component]
 pub fn App() -> Element {
 	let mut view_manager = use_context::<ViewManager>();
+	let mut default_view_id = use_signal(|| 0);
+
 	use_hook(|| {
-		view_manager.open(DefaultView(), "Default view".into());
+		default_view_id.set(default_view_id() + 1);
+		view_manager.open(
+			DefaultView(default_view_id()),
+			format!("Default view #{}", default_view_id()).into(),
+		);
 	});
 
 	let layout = Node::Branch(Branch {
@@ -50,7 +56,10 @@ pub fn App() -> Element {
 					}, "Open file view"}},
 					rsx! {button {onclick: {
 						let mut view_manager = view_manager.clone();
-						move |_| { view_manager.open(DefaultView(), "Default view".into()); }
+						move |_| {
+							default_view_id.set(default_view_id() + 1);
+							view_manager.open(DefaultView(default_view_id()), format!("Default view #{}", default_view_id()).into());
+						}
 					}, "Open default view"}},
 				],
 				..Default::default()
@@ -78,10 +87,21 @@ fn ViewSwitcher() -> Node {
 		for (_, view) in views.clone() {
 			div {
 				class: "view-tab",
+				class: if active_view_id() == view.id.clone() { "tab-active" },
 				onclick: move |_| {
 					active_view_id.set(view.id.clone());
 				},
 				{view.title.clone()}
+				button {
+					onclick:{
+						let mut view_manager = view_manager.clone();
+						move |event| {
+							view_manager.close(view.id.clone());
+							event.stop_propagation();
+						}
+					},
+					"[ X ]"
+				}
 			}
 		}
 	};
@@ -110,8 +130,8 @@ fn FileView(file: String) -> Element {
 	}
 }
 
-fn DefaultView() -> Element {
+fn DefaultView(id: u32) -> Element {
 	rsx! {
-		"Default view content"
+		"Default view #{id} content"
 	}
 }

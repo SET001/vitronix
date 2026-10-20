@@ -41,9 +41,16 @@ html, body, #main {
 .panel{
 	@apply text-on-surface bg-surface border-on-surface border-1 rounded overflow-hidden px-7 py-5;
 }
+.branch{
+	@apply gap-7
+}
+
+/* tabs */
+
 .view-tab{
 	@apply text-on-surface bg-surface border-on-surface border-1 rounded overflow-hidden px-7 py-5;
 }
-.branch{
-	@apply gap-7
+
+.tab-active{
+	@apply font-bold underline
 }
