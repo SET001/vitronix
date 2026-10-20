@@ -82,9 +82,9 @@ pub fn App() -> Element {
 fn ViewSwitcher() -> Node {
 	let view_manager = use_context::<ViewManager>();
 	let views = view_manager.views.cloned();
-	let mut active_view_id = use_signal(|| views.values().next().map(|v| v.id.clone()).unwrap());
+	let mut active_view_id = use_signal(|| views.first().map(|v| v.id.clone()).unwrap());
 	let tabs = rsx! {
-		for (_, view) in views.clone() {
+		for view in views.clone() {
 			div {
 				class: "view-tab",
 				class: if active_view_id() == view.id.clone() { "tab-active" },
@@ -116,7 +116,7 @@ fn ViewSwitcher() -> Node {
 			}),
 			Node::Leaf(Panel {
 				main_sizing: PanelSizing::Content,
-				tools: vec![rsx! { {views.get(&active_view_id.read()).map(|v| v.element.clone()) }}],
+				tools: vec![rsx! { {views.iter().find(|v| v.id == *active_view_id.read()).map(|v| v.element.clone()) }}],
 				..Default::default()
 			}),
 		],
