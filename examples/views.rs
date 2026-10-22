@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
-use vitronix::panel::Panel;
-use vitronix::resource::{Resource, ResourceId, Resources};
+use rand::Rng;
+use vitronix::panel::{Panel, RenderPanel};
+use vitronix::resource::{ResourceId, Resources};
 use vitronix::runner::{RunConfig, WindowConfig, run};
 use vitronix::view::View;
 use vitronix::window::WindowWrapper;
@@ -23,8 +24,8 @@ pub fn App() -> Element {
 				element: rsx! { Description {} },
 			},
 			View {
-				title: "Another View".into(),
-				element: rsx! {"This is another view."},
+				title: "Editor View".into(),
+				element: rsx! { Editor { params: EditorParams::random() } },
 			},
 		]
 		.iter()
@@ -44,74 +45,6 @@ pub fn App() -> Element {
 			content: RenderPanel(panel)
 		}
 	}
-}
-
-#[allow(non_snake_case)]
-pub fn RenderPanel(panel_id: ResourceId<Panel>) -> Element {
-	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
-	let tools: Vec<(ResourceId<View>, View)> = resources
-		.read()
-		.get(&panel_id)
-		.map(|panel| {
-			panel
-				.tools
-				.clone()
-				.into_iter()
-				.flat_map(|id| resources.read().get(&id).map(|view| (id, view.clone())))
-				.collect()
-		})
-		.unwrap_or_default();
-
-	let mut active_view = use_signal(|| tools.clone().first().cloned());
-	rsx! {{
-		active_view.read().cloned().map(|(id, view)| {
-			let tabs = rsx! {
-				for (key, tool) in tools.iter() {
-					{
-						let is_active = active_view.read().as_ref().map(|(id, _)| id) == Some(key);
-						let onclick_key = key.clone();
-						let remove_key = key.clone();
-						let remove_panel_id = panel_id.clone();
-						let fallback_view = tools.iter().find(|(id, _)| id != key).cloned();
-						let onclick_tool = tool.clone();
-						rsx! {
-						div {
-							class: "flex flex-row w-fit panel",
-							class: if is_active { "tab-active" },
-							onclick: move |_| active_view.set(Some((onclick_key.clone(), onclick_tool.clone()))),
-							"{tool.title}"
-							button {
-								onclick: move |evt| {
-									evt.stop_propagation();
-									resources.write().remove(&remove_key);
-									if let Some(panel) = resources.write().get_mut(&remove_panel_id) {
-										panel.tools.retain(|id| id != &remove_key);
-									}
-									if active_view.read().as_ref().map(|(id, _)| id) == Some(&remove_key) {
-										active_view.set(fallback_view.clone());
-									}
-								},
-								"[X]"
-							}
-						}
-					}}
-				}
-			};
-			return rsx! {
-				div{
-					class: "flex flex-col flex-1 w-full min-h-0 gap-0",
-					div {
-						class: "flex flex-row gap-7 panel rounded-b-none",
-						{tabs}
-					}
-					div {
-						class: "flex flex-col flex-1 min-h-0 w-full panel rounded-t-none",
-						{view.element}
-					}
-				}
-			}
-		})
-	}}
 }
 
 #[component]
@@ -137,17 +70,216 @@ pub fn Description() -> Element {
 			class: "flex flex-row",
 			button {
 				onclick: move |_| {
-					info!("Opening another view");
 					let id = resources.write().put(View {
-						title: "Another View".into(),
-						element: rsx! {"This is another view."},
+						title: "Editor View".into(),
+						element: rsx! { Editor { params: EditorParams::random() } },
 					});
 					if let Some(panel) = resources.write().get_mut(&panel_id) {
 						panel.tools.push(id);
 					}
 				},
-				"Open default view",
+				"Open editor view",
 			}
 		 }
+	}
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum City {
+	NewYork,
+	London,
+	Paris,
+	Tokyo,
+}
+
+impl City {
+	const ALL: [City; 4] = [City::NewYork, City::London, City::Paris, City::Tokyo];
+
+	fn label(&self) -> &'static str {
+		match self {
+			City::NewYork => "New York",
+			City::London => "London",
+			City::Paris => "Paris",
+			City::Tokyo => "Tokyo",
+		}
+	}
+
+	fn from_label(label: &str) -> Option<City> {
+		City::ALL.into_iter().find(|city| city.label() == label)
+	}
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Foo {
+	name: String,
+	age: u32,
+	size: f32,
+	city: City,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct EditorParams {
+	items: Vec<Foo>,
+}
+
+impl EditorParams {
+	pub fn random() -> Self {
+		const NAMES: [&str; 6] = ["Alice", "Bob", "Carol", "Dave", "Eve", "Frank"];
+		let mut rng = rand::rng();
+		let count = rng.random_range(3..=8);
+		Self {
+			items: (0..count)
+				.map(|_| Foo {
+					name: NAMES[rng.random_range(0..NAMES.len())].to_string(),
+					age: rng.random_range(18..=90),
+					size: rng.random_range(0.5..=2.5),
+					city: City::ALL[rng.random_range(0..City::ALL.len())],
+				})
+				.collect(),
+		}
+	}
+}
+
+#[component]
+pub fn Editor(params: EditorParams) -> Element {
+	let mut items = use_signal(|| params.items.clone());
+	let mut selected = use_signal(|| None::<usize>);
+	let selected_item = selected().and_then(|i| items().get(i).cloned());
+
+	rsx! {
+		div {
+			class: "flex flex-row flex-1 w-full h-full gap-7",
+			div {
+				class: "flex flex-col panel w-64 shrink-0",
+				ItemsList{
+					items: items(),
+					selected: selected(),
+					on_select: move |i| selected.set(Some(i)),
+				}
+			}
+			div {
+				class: "flex flex-col panel w-128 shrink-0",
+				FooDetails{
+					item: selected_item,
+					on_change: move |updated: Foo| {
+						if let Some(i) = selected() {
+							if let Some(slot) = items.write().get_mut(i) {
+								*slot = updated;
+							}
+						}
+					},
+				}
+			}
+			div {
+				class: "flex flex-col panel flex-1",
+				"some content goes here"
+			}
+		}
+		div{
+			class: "flex flex-row panel",
+			"status bar."
+		}
+	}
+}
+
+#[component]
+pub fn ItemsList(items: Vec<Foo>, selected: Option<usize>, on_select: EventHandler<usize>) -> Element {
+	rsx! {
+		div {
+			class: "flex flex-col flex-1 w-full h-full",
+			for (i, item) in items.iter().enumerate() {
+				div {
+					key: "{i}",
+					class: "cursor-pointer",
+					class: if selected == Some(i) { "tab-active" },
+					onclick: move |_| on_select.call(i),
+					"{item.name}"
+				}
+			}
+		}
+	}
+}
+
+#[component]
+pub fn FooDetails(item: Option<Foo>, on_change: EventHandler<Foo>) -> Element {
+	rsx! {
+		div {
+			class: "flex flex-col flex-1 w-full h-full gap-5",
+			if let Some(item) = item {
+				label {
+					class: "flex flex-col",
+					"Name"
+					input {
+						r#type: "text",
+						value: "{item.name}",
+						oninput: {
+							let item = item.clone();
+							move |evt| {
+								let mut updated = item.clone();
+								updated.name = evt.value();
+								on_change.call(updated);
+							}
+						},
+					}
+				}
+				label {
+					class: "flex flex-col",
+					"Age"
+					input {
+						r#type: "number",
+						min: "0",
+						value: "{item.age}",
+						oninput: {
+							let item = item.clone();
+							move |evt| {
+								if let Ok(age) = evt.value().parse::<u32>() {
+									let mut updated = item.clone();
+									updated.age = age;
+									on_change.call(updated);
+								}
+							}
+						},
+					}
+				}
+				label {
+					class: "flex flex-col",
+					"Size"
+					input {
+						r#type: "number",
+						step: "0.1",
+						value: "{item.size}",
+						oninput: {
+							let item = item.clone();
+							move |evt| {
+								if let Ok(size) = evt.value().parse::<f32>() {
+									let mut updated = item.clone();
+									updated.size = size;
+									on_change.call(updated);
+								}
+							}
+						},
+					}
+				}
+				label {
+					class: "flex flex-col",
+					"City"
+					select {
+						value: "{item.city.label()}",
+						onchange: move |evt| {
+							if let Some(city) = City::from_label(&evt.value()) {
+								let mut updated = item.clone();
+								updated.city = city;
+								on_change.call(updated);
+							}
+						},
+						for city in City::ALL {
+							option { key: "{city.label()}", value: "{city.label()}", "{city.label()}" }
+						}
+					}
+				}
+			} else {
+				div { "Select an item from the list." }
+			}
+		}
 	}
 }
