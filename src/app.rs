@@ -1,7 +1,8 @@
 #![allow(unpredictable_function_pointer_comparisons)]
 
+use crate::resource::Resources;
 use crate::state::PersistentState;
-use crate::view::{View, ViewManager};
+use crate::view::View;
 use crate::{
 	plugin::use_plugins,
 	runner::RunConfig,
@@ -34,7 +35,8 @@ pub fn App() -> Element {
 
 	use_context_provider(|| Signal::<Vec<View>>::new(vec![]));
 	use_context_provider(|| plugins);
-	use_context_provider(|| ViewManager::default());
+	// use_context_provider(|| ViewManager::default());
+	use_context_provider(|| Signal::new(Resources::new()));
 
 	use_effect(move || {
 		let state = plugins.read();

@@ -35,14 +35,18 @@ html, body, #main {
 	@apply flex flex-1 min-h-0 p-7;
 }
 
-/* py is 4px smaller than px to offset the half-leading (line-height: 1.5 on
-   16px text adds ~4px of invisible vertical space above/below the glyphs),
-   so the visible gap ends up equal on both axes. */
-.panel{
-	@apply text-on-surface bg-surface border-on-surface border-1 rounded overflow-hidden px-7 py-5;
-}
-.branch{
-	@apply gap-7
+/* Wrapped in a layer so tailwind utilities (gap-0, border-b-0, ...) passed via
+   the `class` field of nodes can override these defaults. */
+@layer components {
+	/* py is 4px smaller than px to offset the half-leading (line-height: 1.5 on
+	   16px text adds ~4px of invisible vertical space above/below the glyphs),
+	   so the visible gap ends up equal on both axes. */
+	.panel{
+		@apply text-on-surface bg-surface border-on-surface border-1 rounded overflow-hidden px-7 py-5;
+	}
+	.branch{
+		@apply gap-7
+	}
 }
 
 /* tabs */

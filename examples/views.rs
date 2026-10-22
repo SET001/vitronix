@@ -1,14 +1,9 @@
-#![allow(non_snake_case)]
-
 use dioxus::prelude::*;
-use rfd::AsyncFileDialog;
-use vitronix::{
-	layout::Layout,
-	panel::{Branch, LayoutDirection, Node, Panel, PanelSizing},
-	runner::{RunConfig, WindowConfig, run},
-	view::ViewManager,
-	window::WindowWrapper,
-};
+use vitronix::panel::Panel;
+use vitronix::resource::{Resource, ResourceId, Resources};
+use vitronix::runner::{RunConfig, WindowConfig, run};
+use vitronix::view::View;
+use vitronix::window::WindowWrapper;
 
 fn main() {
 	run(RunConfig {
@@ -20,118 +15,139 @@ fn main() {
 
 #[component]
 pub fn App() -> Element {
-	let mut view_manager = use_context::<ViewManager>();
-	let mut default_view_id = use_signal(|| 0);
-
-	use_hook(|| {
-		default_view_id.set(default_view_id() + 1);
-		view_manager.open(
-			DefaultView(default_view_id()),
-			format!("Default view #{}", default_view_id()).into(),
-		);
-	});
-
-	let layout = Node::Branch(Branch {
-		children: vec![
-			Node::Leaf(Panel {
-				main_sizing: PanelSizing::Content,
-				tools: vec![
-					rsx! {"This is example of how you can use multiple Views in the app."},
-					rsx! {button {onclick: {
-						let view_manager = view_manager.clone();
-
-						move |_| {
-							let mut view_manager = view_manager.clone();
-							spawn(async move {
-								if let Some(file) = AsyncFileDialog::new()
-									.set_title("Open file")
-									.pick_file()
-									.await
-								{
-									let path = file.path().to_string_lossy().into_owned();
-									view_manager.open(FileView(path), "File".into());
-								}
-							});
-						}
-					}, "Open file view"}},
-					rsx! {button {onclick: {
-						let mut view_manager = view_manager.clone();
-						move |_| {
-							default_view_id.set(default_view_id() + 1);
-							view_manager.open(DefaultView(default_view_id()), format!("Default view #{}", default_view_id()).into());
-						}
-					}, "Open default view"}},
-				],
+	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
+	let panel = use_hook(|| {
+		let tools = vec![
+			View {
+				title: "Description".into(),
+				element: rsx! { Description {} },
+			},
+			View {
+				title: "Another View".into(),
+				element: rsx! {"This is another view."},
+			},
+		]
+		.iter()
+		.map(|view| resources.write().put(view.clone()))
+		.collect::<Vec<_>>();
+		resources.write().put_named(
+			Panel {
+				tools,
 				..Default::default()
-			}),
-			ViewSwitcher(),
-		],
-		..Default::default()
+			},
+			"tabs".into(),
+		)
 	});
 
 	rsx! {
 		WindowWrapper{
-			content: rsx! {
-				Layout{layout},
-			}
+			content: RenderPanel(panel)
 		}
 	}
+}
+
+#[allow(non_snake_case)]
+pub fn RenderPanel(panel_id: ResourceId<Panel>) -> Element {
+	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
+	let tools: Vec<(ResourceId<View>, View)> = resources
+		.read()
+		.get(&panel_id)
+		.map(|panel| {
+			panel
+				.tools
+				.clone()
+				.into_iter()
+				.flat_map(|id| resources.read().get(&id).map(|view| (id, view.clone())))
+				.collect()
+		})
+		.unwrap_or_default();
+
+	let mut active_view = use_signal(|| tools.clone().first().cloned());
+	rsx! {{
+		active_view.read().cloned().map(|(id, view)| {
+			let tabs = rsx! {
+				for (key, tool) in tools.iter() {
+					{
+						let is_active = active_view.read().as_ref().map(|(id, _)| id) == Some(key);
+						let onclick_key = key.clone();
+						let remove_key = key.clone();
+						let remove_panel_id = panel_id.clone();
+						let fallback_view = tools.iter().find(|(id, _)| id != key).cloned();
+						let onclick_tool = tool.clone();
+						rsx! {
+						div {
+							class: "flex flex-row w-fit panel",
+							class: if is_active { "tab-active" },
+							onclick: move |_| active_view.set(Some((onclick_key.clone(), onclick_tool.clone()))),
+							"{tool.title}"
+							button {
+								onclick: move |evt| {
+									evt.stop_propagation();
+									resources.write().remove(&remove_key);
+									if let Some(panel) = resources.write().get_mut(&remove_panel_id) {
+										panel.tools.retain(|id| id != &remove_key);
+									}
+									if active_view.read().as_ref().map(|(id, _)| id) == Some(&remove_key) {
+										active_view.set(fallback_view.clone());
+									}
+								},
+								"[X]"
+							}
+						}
+					}}
+				}
+			};
+			return rsx! {
+				div{
+					class: "flex flex-col flex-1 w-full min-h-0 gap-0",
+					div {
+						class: "flex flex-row gap-7 panel rounded-b-none",
+						{tabs}
+					}
+					div {
+						class: "flex flex-col flex-1 min-h-0 w-full panel rounded-t-none",
+						{view.element}
+					}
+				}
+			}
+		})
+	}}
 }
 
 #[component]
-fn ViewSwitcher() -> Node {
-	let view_manager = use_context::<ViewManager>();
-	let views = view_manager.views.cloned();
-	let mut active_view_id = use_signal(|| views.first().map(|v| v.id.clone()).unwrap());
-	let tabs = rsx! {
-		for view in views.clone() {
-			div {
-				class: "view-tab",
-				class: if active_view_id() == view.id.clone() { "tab-active" },
-				onclick: move |_| {
-					active_view_id.set(view.id.clone());
-				},
-				{view.title.clone()}
-				button {
-					onclick:{
-						let mut view_manager = view_manager.clone();
-						move |event| {
-							view_manager.close(view.id.clone());
-							event.stop_propagation();
-						}
-					},
-					"[ X ]"
-				}
-			}
-		}
-	};
-	Node::Branch(Branch {
-		children: vec![
-			Node::Leaf(Panel {
-				class: "gap-7".to_string(),
-				main_sizing: PanelSizing::Content,
-				layout_direction: LayoutDirection::Right,
-				tools: vec![tabs],
-				..Default::default()
-			}),
-			Node::Leaf(Panel {
-				main_sizing: PanelSizing::Content,
-				tools: vec![rsx! { {views.iter().find(|v| v.id == *active_view_id.read()).map(|v| v.element.clone()) }}],
-				..Default::default()
-			}),
-		],
-		..Default::default()
-	})
-}
+pub fn Description() -> Element {
+	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
+	let panel_id = ResourceId::<Panel>::from_string("tabs".into());
+	let panel_exists = resources.read().get(&panel_id).is_some();
 
-fn FileView(file: String) -> Element {
-	rsx! {
-		"FileView for file: {file}"
+	if !panel_exists {
+		return rsx! { "Tabs panel not found" };
 	}
-}
 
-fn DefaultView(id: u32) -> Element {
 	rsx! {
-		"Default view #{id} content"
+		div {
+			class: "flex flex-row",
+			"This is example of how you can use multiple Views in the app."
+		}
+		div {
+			class: "flex flex-row",
+			button { "Click me" }
+		 }
+		div {
+			class: "flex flex-row",
+			button {
+				onclick: move |_| {
+					info!("Opening another view");
+					let id = resources.write().put(View {
+						title: "Another View".into(),
+						element: rsx! {"This is another view."},
+					});
+					if let Some(panel) = resources.write().get_mut(&panel_id) {
+						panel.tools.push(id);
+					}
+				},
+				"Open default view",
+			}
+		 }
 	}
 }

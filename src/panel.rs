@@ -1,8 +1,13 @@
 use dioxus::core::Element;
 
+use crate::{
+	resource::{Resource, ResourceId},
+	view::View,
+};
+
 #[derive(Clone, Debug, PartialEq, Default)]
 pub enum DisplayMode {
-	Tabbed(ResourceId),
+	Tabbed,
 	#[default]
 	Stacked,
 }
@@ -43,8 +48,6 @@ pub enum ResizeAxis {
 	Both,
 }
 
-type ResourceId = String;
-
 #[derive(Default, Clone, PartialEq)]
 pub struct Branch {
 	// id: ResourceId,
@@ -66,14 +69,13 @@ pub struct Panel {
 	// id: ResourceId,
 	pub display_mode: DisplayMode,
 	pub is_collapsed: Option<bool>,
-	pub draggable: bool,
 	pub layout_direction: LayoutDirection,
 	/// Sizing along the parent branch's layout axis.
-	pub main_sizing: PanelSizing,
 	/// Sizing across the parent branch's layout axis.
-	pub cross_sizing: CrossSizing,
-	pub tools: Vec<Element>,
+	pub tools: Vec<ResourceId<View>>,
 }
+
+impl Resource for Panel {}
 
 #[derive(Clone, PartialEq)]
 pub enum Node {
