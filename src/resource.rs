@@ -27,8 +27,17 @@ impl<T: Resource> TypedResources<T> {
 		&self.resources[&id]
 	}
 }
+
+pub struct StoreEntry {
+	pub type_name: &'static str,
+	pub size: usize,
+	pub count: usize,
+	pub store: Box<dyn Any>,
+	pub len: fn(&dyn Any) -> usize,
+}
+
 pub struct Resources {
-	stores: HashMap<TypeId, Box<dyn Any>>,
+	pub stores: HashMap<TypeId, StoreEntry>,
 }
 
 impl Resources {
@@ -41,17 +50,25 @@ impl Resources {
 	}
 
 	pub fn put_named<T: Resource + 'static>(&mut self, resource: T, name: String) -> ResourceId<T> {
-		let store = self
-			.stores
-			.entry(TypeId::of::<T>())
-			.or_insert_with(|| {
-				Box::new(TypedResources::<T> {
-					resources: HashMap::new(),
-				})
-			})
+		let store = self.stores.entry(TypeId::of::<T>()).or_insert_with(|| StoreEntry {
+			type_name: std::any::type_name::<T>(),
+			size: std::mem::size_of::<T>(),
+			count: 0,
+			store: Box::new(TypedResources::<T> {
+				resources: HashMap::new(),
+			}),
+			len: |any| {
+				any.downcast_ref::<TypedResources<T>>()
+					.map(|store| store.resources.len())
+					.unwrap_or(0)
+			},
+		});
+		store
+			.store
 			.downcast_mut::<TypedResources<T>>()
-			.unwrap();
-		store.resources.insert(name.clone(), resource);
+			.unwrap()
+			.resources
+			.insert(name.clone(), resource);
 		ResourceId {
 			id: name,
 			_marker: std::marker::PhantomData,
@@ -62,6 +79,7 @@ impl Resources {
 		let type_id = TypeId::of::<T>();
 		let boxed = self.stores.get(&type_id)?;
 		boxed
+			.store
 			.downcast_ref::<TypedResources<T>>()
 			.and_then(|store| store.resources.get(&id.id))
 	}
@@ -74,6 +92,7 @@ impl Resources {
 		let type_id = TypeId::of::<T>();
 		let boxed = self.stores.get_mut(&type_id)?;
 		boxed
+			.store
 			.downcast_mut::<TypedResources<T>>()
 			.and_then(|store| store.resources.get_mut(&id.id))
 	}
@@ -82,6 +101,7 @@ impl Resources {
 		let type_id = TypeId::of::<T>();
 		let boxed = self.stores.get_mut(&type_id)?;
 		boxed
+			.store
 			.downcast_mut::<TypedResources<T>>()
 			.and_then(|store| store.resources.remove(&id.id))
 	}

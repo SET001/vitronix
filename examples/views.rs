@@ -3,7 +3,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vitronix::panel::{Panel, RenderPanel};
-use vitronix::resource::{ResourceId, Resources};
+use vitronix::resource::{ResourceId, Resources, TypedResources};
 use vitronix::runner::{RunConfig, WindowConfig, run};
 use vitronix::view::{View, persistent_in_scope};
 use vitronix::window::WindowWrapper;
@@ -34,10 +34,14 @@ pub fn App() -> Element {
 			title: "Description".into(),
 			element: rsx! { Description {} },
 		});
+		let res_man = resources.write().put(View {
+			title: "Resources".into(),
+			element: rsx! { ResourcesManager {} },
+		});
 
 		resources.write().put_named(
 			Panel {
-				tools: vec![editor_view_id, desc_view_id],
+				tools: vec![desc_view_id, editor_view_id, res_man],
 				..Default::default()
 			},
 			"tabs".into(),
@@ -289,6 +293,23 @@ pub fn FooDetails(item: Option<Foo>, on_change: EventHandler<Foo>) -> Element {
 				}
 			} else {
 				div { "Select an item from the list." }
+			}
+		}
+	}
+}
+
+pub fn ResourcesManager() -> Element {
+	let resources = use_context::<Signal<Resources>>();
+	let resource_keys = resources
+		.read()
+		.stores
+		.iter()
+		.map(|(_, entry)| format!("{:?}: {}", entry.type_name, (entry.len)(&*entry.store)))
+		.collect::<Vec<_>>();
+	rsx! {
+		div {
+			for key in resource_keys {
+				div { "{key}" }
 			}
 		}
 	}
