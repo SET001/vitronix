@@ -1,9 +1,11 @@
 use dioxus::prelude::*;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use vitronix::panel::{Panel, RenderPanel};
 use vitronix::resource::{ResourceId, Resources};
 use vitronix::runner::{RunConfig, WindowConfig, run};
-use vitronix::view::View;
+use vitronix::view::{View, persistent_in_scope};
 use vitronix::window::WindowWrapper;
 
 fn main() {
@@ -18,22 +20,24 @@ fn main() {
 pub fn App() -> Element {
 	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
 	let panel = use_hook(|| {
-		let tools = vec![
-			View {
-				title: "Description".into(),
-				element: rsx! { Description {} },
-			},
+		let editor_view_id = ResourceId::from_string(Uuid::new_v4().to_string());
+		let editor_params = persistent_in_scope(format!("editor:{}", editor_view_id.id), ScopeId::APP, EditorParams::random);
+		resources.write().put_named(
 			View {
 				title: "Editor View".into(),
-				element: rsx! { Editor { params: EditorParams::random() } },
+				element: rsx! { Editor { params: editor_params } },
 			},
-		]
-		.iter()
-		.map(|view| resources.write().put(view.clone()))
-		.collect::<Vec<_>>();
+			editor_view_id.id.clone(),
+		);
+
+		let desc_view_id = resources.write().put(View {
+			title: "Description".into(),
+			element: rsx! { Description {} },
+		});
+
 		resources.write().put_named(
 			Panel {
-				tools,
+				tools: vec![editor_view_id, desc_view_id],
 				..Default::default()
 			},
 			"tabs".into(),
@@ -70,12 +74,19 @@ pub fn Description() -> Element {
 			class: "flex flex-row",
 			button {
 				onclick: move |_| {
-					let id = resources.write().put(View {
-						title: "Editor View".into(),
-						element: rsx! { Editor { params: EditorParams::random() } },
-					});
+					let editor_view_id = ResourceId::from_string(Uuid::new_v4().to_string());
+					let editor_params =
+						persistent_in_scope(format!("editor:{}", editor_view_id.id), ScopeId::APP, EditorParams::random);
+
+					resources.write().put_named(
+						View {
+							title: "Editor View".into(),
+							element: rsx! { Editor { params: editor_params } },
+						},
+						editor_view_id.id.clone(),
+					);
 					if let Some(panel) = resources.write().get_mut(&panel_id) {
-						panel.tools.push(id);
+						panel.tools.push(editor_view_id);
 					}
 				},
 				"Open editor view",
@@ -84,7 +95,7 @@ pub fn Description() -> Element {
 	}
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum City {
 	NewYork,
 	London,
@@ -109,7 +120,7 @@ impl City {
 	}
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Foo {
 	name: String,
 	age: u32,
@@ -117,7 +128,7 @@ pub struct Foo {
 	city: City,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EditorParams {
 	items: Vec<Foo>,
 }
@@ -141,10 +152,9 @@ impl EditorParams {
 }
 
 #[component]
-pub fn Editor(params: EditorParams) -> Element {
-	let mut items = use_signal(|| params.items.clone());
+pub fn Editor(params: Signal<EditorParams>) -> Element {
 	let mut selected = use_signal(|| None::<usize>);
-	let selected_item = selected().and_then(|i| items().get(i).cloned());
+	let selected_item = selected().and_then(|i| params().items.get(i).cloned());
 
 	rsx! {
 		div {
@@ -152,7 +162,7 @@ pub fn Editor(params: EditorParams) -> Element {
 			div {
 				class: "flex flex-col panel w-64 shrink-0",
 				ItemsList{
-					items: items(),
+					items: params().items,
 					selected: selected(),
 					on_select: move |i| selected.set(Some(i)),
 				}
@@ -163,7 +173,7 @@ pub fn Editor(params: EditorParams) -> Element {
 					item: selected_item,
 					on_change: move |updated: Foo| {
 						if let Some(i) = selected() {
-							if let Some(slot) = items.write().get_mut(i) {
+							if let Some(slot) = params.write().items.get_mut(i) {
 								*slot = updated;
 							}
 						}

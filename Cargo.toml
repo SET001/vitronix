@@ -9,6 +9,7 @@ version = "0.1.0"
 
 [dependencies]
 dioxus.workspace = true
+dioxus-sdk-storage.workspace = true
 dirs.workspace = true
 indexmap.workspace = true
 libloading = "0.8"
@@ -25,6 +26,7 @@ gtk = "0.18"
 
 [workspace.dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }
+dioxus-sdk-storage = { version = "0.7" }
 dirs = "5.0"
 indexmap = { version = "2", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }

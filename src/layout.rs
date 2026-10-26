@@ -103,20 +103,21 @@ pub fn RenderBranch(branch: Branch, parent_axis: Axis) -> Element {
 
 #[component]
 pub fn RenderPanel(panel: Panel, parent_axis: Axis) -> Element {
-	debug!("rendering PanelWidgetGroup component");
-	let flex_class = match panel.layout_direction {
-		LayoutDirection::Right => "flex flex-row",
-		LayoutDirection::Left => "flex flex-row-reverse",
-		LayoutDirection::Down => "flex flex-col",
-		LayoutDirection::Up => "flex flex-col-reverse",
-	};
-	let (main_class, main_style) = main_sizing_attrs(&panel.main_sizing);
-	let (cross_class, cross_style) = cross_sizing_attrs(&panel.cross_sizing, parent_axis);
-	rsx! {
-		div { class: "{flex_class} {main_class} {cross_class} panel {panel.class}", style: "{main_style} {cross_style}",
-			for widget in panel.tools {
-				{widget}
-			}
-		}
-	}
+	// debug!("rendering PanelWidgetGroup component");
+	// let flex_class = match panel.layout_direction {
+	// 	LayoutDirection::Right => "flex flex-row",
+	// 	LayoutDirection::Left => "flex flex-row-reverse",
+	// 	LayoutDirection::Down => "flex flex-col",
+	// 	LayoutDirection::Up => "flex flex-col-reverse",
+	// };
+	// let (main_class, main_style) = main_sizing_attrs(&panel.main_sizing);
+	// let (cross_class, cross_style) = cross_sizing_attrs(&panel.cross_sizing, parent_axis);
+	// rsx! {
+	// 	div { class: "{flex_class} {main_class} {cross_class} panel {panel.class}", style: "{main_style} {cross_style}",
+	// 		for widget in panel.tools {
+	// 			{widget}
+	// 		}
+	// 	}
+	// }
+	rsx! {}
 }

@@ -69,6 +69,8 @@ impl Default for RunConfig {
 }
 
 pub fn run(config: RunConfig) {
+	dioxus_sdk_storage::set_directory(crate::state::get_config_path(&config.app_name).join("views"));
+
 	let window = dioxus::desktop::WindowBuilder::new()
 		.with_visible(false)
 		.with_transparent(true)
