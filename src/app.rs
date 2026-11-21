@@ -1,14 +1,18 @@
 #![allow(unpredictable_function_pointer_comparisons)]
 
+use std::collections::HashMap;
+
+use crate::container::LayoutManager;
 use crate::resource::Resources;
 use crate::state::PersistentState;
-use crate::view::View;
+use crate::view::{View, ViewsRegistry};
 use crate::{
 	plugin::use_plugins,
 	runner::RunConfig,
 	state::{AppPersistentState, load_app_state, save_app_state},
 };
 use dioxus::{desktop::use_window, prelude::*};
+use dioxus_sdk_storage::{LocalStorage, use_storage};
 
 #[component]
 fn PluginHost(entry: fn() -> Element) -> Element {
@@ -37,6 +41,13 @@ pub fn App() -> Element {
 	use_context_provider(|| plugins);
 	// use_context_provider(|| ViewManager::default());
 	use_context_provider(|| Signal::new(Resources::new()));
+	use_context_provider(|| ViewsRegistry::new());
+
+	let storage_key = format!("{}_layout_manager", config.app_name);
+	info!("Using storage key: {}", storage_key);
+	let layout_manager = use_storage::<LocalStorage, LayoutManager>(storage_key, || LayoutManager::default());
+	info!("Layout manager initialized: {:?}", layout_manager.read());
+	use_context_provider(|| layout_manager);
 
 	use_effect(move || {
 		let state = plugins.read();

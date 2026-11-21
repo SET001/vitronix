@@ -15,6 +15,8 @@ indexmap.workspace = true
 libloading = "0.8"
 serde.workspace = true
 toml.workspace = true
+# enables the `ansi` feature of tracing-subscriber so dioxus-logger output is colored
+tracing-subscriber = { version = "0.3", features = ["ansi", "fmt"] }
 uuid.workspace = true
 
 [dev-dependencies]

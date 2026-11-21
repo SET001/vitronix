@@ -69,7 +69,10 @@ impl Default for RunConfig {
 }
 
 pub fn run(config: RunConfig) {
-	dioxus_sdk_storage::set_directory(crate::state::get_config_path(&config.app_name).join("views"));
+	dioxus::logger::init(dioxus::logger::tracing::Level::DEBUG).expect("failed to initialize Dioxus logger");
+	let storage_dir = crate::state::get_config_path(&config.app_name).join("views");
+	debug!("Using storage directory: {:?}", storage_dir);
+	dioxus_sdk_storage::set_directory(storage_dir);
 
 	let window = dioxus::desktop::WindowBuilder::new()
 		.with_visible(false)

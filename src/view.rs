@@ -1,16 +1,47 @@
-use crate::resource::Resource;
+use crate::resource::{Resource, ResourceId};
 use dioxus::prelude::*;
 use dioxus_sdk_storage::{LocalStorage, StorageBacking, StorageEntryTrait, get_from_storage};
-use serde::{Serialize, de::DeserializeOwned};
-use uuid::Uuid;
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct View {
 	pub title: String,
+	pub closable: bool,
 	pub element: Element,
 }
-
 impl Resource for View {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ViewDescriptor {
+	pub template: String,
+	pub instance_id: Option<ResourceId<View>>,
+}
+
+#[derive(Clone)]
+pub struct ViewsRegistry {
+	registry: HashMap<String, fn() -> View>,
+}
+
+impl ViewsRegistry {
+	pub fn new() -> Self {
+		Self {
+			registry: HashMap::new(),
+		}
+	}
+
+	pub fn register(&mut self, view_name: &str, view: fn() -> View) -> ResourceId<View> {
+		debug!("Registering view {} in ViewsRegistry", view_name);
+		if let None = self.registry.get(view_name) {
+			self.registry.insert(view_name.into(), view);
+		}
+		ResourceId::from_string(view_name.into())
+	}
+
+	pub fn get(&self, view_name: &str) -> Option<&fn() -> View> {
+		self.registry.get(view_name)
+	}
+}
 
 /// A `StorageEntry` whose backing `Signal` is explicitly bound to a chosen `owner` scope
 /// instead of "whatever scope is currently executing" (which is what `dioxus_sdk_storage`'s

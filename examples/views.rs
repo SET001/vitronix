@@ -5,6 +5,7 @@ use uuid::Uuid;
 use vitronix::panel::{Panel, RenderPanel};
 use vitronix::resource::{ResourceId, Resources, TypedResources};
 use vitronix::runner::{RunConfig, WindowConfig, run};
+use vitronix::view::ViewsRegistry;
 use vitronix::view::{View, persistent_in_scope};
 use vitronix::window::WindowWrapper;
 
@@ -19,29 +20,50 @@ fn main() {
 #[component]
 pub fn App() -> Element {
 	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
-	let panel = use_hook(|| {
-		let editor_view_id = ResourceId::from_string(Uuid::new_v4().to_string());
-		let editor_params = persistent_in_scope(format!("editor:{}", editor_view_id.id), ScopeId::APP, EditorParams::random);
-		resources.write().put_named(
-			View {
-				title: "Editor View".into(),
-				element: rsx! { Editor { params: editor_params } },
-			},
-			editor_view_id.id.clone(),
-		);
+	let mut views_registry: ViewsRegistry = use_context::<ViewsRegistry>();
 
-		let desc_view_id = resources.write().put(View {
+	let panel = use_hook(|| {
+		views_registry.register("exemple.views.description", || View {
 			title: "Description".into(),
 			element: rsx! { Description {} },
 		});
-		let res_man = resources.write().put(View {
+		views_registry.register("exemple.views.editor", || {
+			let editor_view_id: ResourceId<View> = ResourceId::from_string(Uuid::new_v4().to_string());
+			let editor_params = persistent_in_scope(format!("editor:{}", editor_view_id.id), ScopeId::APP, EditorParams::random);
+			View {
+				title: "Editor".into(),
+				element: rsx! { Editor { params: editor_params } },
+			}
+		});
+		views_registry.register("exemple.views.resources", || View {
 			title: "Resources".into(),
 			element: rsx! { ResourcesManager {} },
 		});
 
+		// resources.write().put_named(
+		// 	View {
+		// 		title: "Editor View".into(),
+		// 		element: rsx! { Editor { params: editor_params } },
+		// 	},
+		// 	editor_view_id.id.clone(),
+		// );
+
+		// let desc_view_id = resources.write().put(View {
+		// 	title: "Description".into(),
+		// 	element: rsx! { Description {} },
+		// });
+		// let res_man = resources.write().put(View {
+		// 	title: "Resources".into(),
+		// 	element: rsx! { ResourcesManager {} },
+		// });
+
 		resources.write().put_named(
 			Panel {
-				tools: vec![desc_view_id, editor_view_id, res_man],
+				schema: vec![
+					"exemple.views.description".to_owned(),
+					"exemple.views.editor".to_owned(),
+					"exemple.views.resources".to_owned(),
+				],
 				..Default::default()
 			},
 			"tabs".into(),

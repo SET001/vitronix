@@ -1,11 +1,15 @@
+use dioxus::logger::tracing::debug;
+use serde::{Deserialize, Serialize};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
+#[serde(bound = "")]
 pub struct ResourceId<T> {
 	pub id: String,
-	pub _marker: std::marker::PhantomData<T>,
+	// `fn() -> T` keeps the id `Send + Sync` regardless of `T` (e.g. `View` holds an `Element`).
+	pub _marker: std::marker::PhantomData<fn() -> T>,
 }
 
 impl<T> ResourceId<T> {
@@ -14,6 +18,12 @@ impl<T> ResourceId<T> {
 			id,
 			_marker: std::marker::PhantomData,
 		}
+	}
+}
+
+impl<T> std::fmt::Debug for ResourceId<T> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "ResourceId {{ id: {} }}", self.id)
 	}
 }
 pub trait Resource {}
@@ -50,6 +60,7 @@ impl Resources {
 	}
 
 	pub fn put_named<T: Resource + 'static>(&mut self, resource: T, name: String) -> ResourceId<T> {
+		debug!("Putting resource of type {} with name {}", std::any::type_name::<T>(), name);
 		let store = self.stores.entry(TypeId::of::<T>()).or_insert_with(|| StoreEntry {
 			type_name: std::any::type_name::<T>(),
 			size: std::mem::size_of::<T>(),

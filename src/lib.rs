@@ -1,5 +1,6 @@
 mod app;
 mod config;
+pub mod container;
 pub mod layout;
 pub mod panel;
 pub mod plugin;

@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 use crate::{
 	resource::{Resource, ResourceId, Resources},
-	view::View,
+	view::{View, ViewDescriptor},
 };
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -72,7 +72,7 @@ pub struct Panel {
 	pub layout_direction: LayoutDirection,
 	/// Sizing along the parent branch's layout axis.
 	/// Sizing across the parent branch's layout axis.
-	pub tools: Vec<ResourceId<View>>,
+	pub views: Vec<ViewDescriptor>,
 }
 
 impl Resource for Panel {}
@@ -85,64 +85,64 @@ pub enum Node {
 
 #[allow(non_snake_case)]
 pub fn RenderPanel(panel_id: ResourceId<Panel>) -> Element {
-	let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
-	let tools: Vec<ResourceId<View>> = resources
-		.read()
-		.get(&panel_id)
-		.map(|panel| panel.tools.clone())
-		.unwrap_or_default();
+	// let mut resources: Signal<Resources> = use_context::<Signal<Resources>>();
+	// let tools: Vec<ResourceId<View>> = resources
+	// 	.read()
+	// 	.get(&panel_id)
+	// 	.map(|panel| panel.views.clone())
+	// 	.unwrap_or_default();
 
-	let mut active = use_signal(|| None::<ResourceId<View>>);
-	let current = active().filter(|id| tools.contains(id)).or_else(|| tools.first().cloned());
+	// let mut active = use_signal(|| None::<ResourceId<View>>);
+	// let current = active().filter(|id| tools.contains(id)).or_else(|| tools.first().cloned());
 
-	let content = current
-		.as_ref()
-		.and_then(|id| resources.read().get(id).map(|view| view.element.clone()));
+	// let content = current
+	// 	.as_ref()
+	// 	.and_then(|id| resources.read().get(id).map(|view| view.element.clone()));
 
-	let tabs = tools.iter().cloned().map(|view_id| {
-		let title = resources
-			.read()
-			.get(&view_id)
-			.map(|view| view.title.clone())
-			.unwrap_or_default();
-		let is_active = current.as_ref() == Some(&view_id);
-		let select_id = view_id.clone();
-		let close_id = view_id.clone();
-		let panel_id = panel_id.clone();
-		rsx! {
-			div {
-				key: "{view_id.id}",
-				class: "flex flex-row w-fit panel",
-				class: if is_active { "tab-active" },
-				onclick: move |_| active.set(Some(select_id.clone())),
-				"{title}"
-				button {
-					onclick: move |evt| {
-						evt.stop_propagation();
-						resources.write().remove(&close_id);
-						if let Some(panel) = resources.write().get_mut(&panel_id) {
-							panel.tools.retain(|id| id != &close_id);
-						}
-					},
-					"[X]"
-				}
-			}
-		}
-	});
+	// let tabs = tools.iter().cloned().map(|view_id| {
+	// 	let title = resources
+	// 		.read()
+	// 		.get(&view_id)
+	// 		.map(|view| view.title.clone())
+	// 		.unwrap_or_default();
+	// 	let is_active = current.as_ref() == Some(&view_id);
+	// 	let select_id = view_id.clone();
+	// 	let close_id = view_id.clone();
+	// 	let panel_id = panel_id.clone();
+	// 	rsx! {
+	// 		div {
+	// 			key: "{view_id.id}",
+	// 			class: "flex flex-row w-fit panel",
+	// 			class: if is_active { "tab-active" },
+	// 			onclick: move |_| active.set(Some(select_id.clone())),
+	// 			"{title}"
+	// 			button {
+	// 				onclick: move |evt| {
+	// 					evt.stop_propagation();
+	// 					resources.write().remove(&close_id);
+	// 					if let Some(panel) = resources.write().get_mut(&panel_id) {
+	// 						panel.tools.retain(|id| id != &close_id);
+	// 					}
+	// 				},
+	// 				"[X]"
+	// 			}
+	// 		}
+	// 	}
+	// });
 
 	rsx! {
-		div {
-			class: "flex flex-col flex-1 w-full min-h-0 gap-0 h-full",
-			div {
-				class: "flex flex-row gap-7 panel rounded-b-none",
-				{tabs}
-			}
-			div {
-				class: "flex flex-col flex-1 min-h-0 w-full panel rounded-t-none gap-7",
-				if let Some(element) = content {
-					{element}
-				}
-			}
-		}
+		// div {
+		// 	class: "flex flex-col flex-1 w-full min-h-0 gap-0 h-full",
+		// 	div {
+		// 		class: "flex flex-row gap-7 panel rounded-b-none",
+		// 		{tabs}
+		// 	}
+		// 	div {
+		// 		class: "flex flex-col flex-1 min-h-0 w-full panel rounded-t-none gap-7",
+		// 		if let Some(element) = content {
+		// 			{element}
+		// 		}
+		// 	}
+		// }
 	}
 }
