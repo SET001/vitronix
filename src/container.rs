@@ -91,6 +91,8 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 			debug!("Rendering container {} with panels: {:?}", id, container.panels);
 			rsx! {
 				div{
+					class: container.class.clone() + " panel",
+					{id}
 					for panel in panels.iter() {
 						Panel{params: panel.clone()}
 					}
@@ -99,6 +101,7 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 		}
 		Err(err) => rsx! {
 			div {
+				class: "panel",
 				"{id}: Error: {err}"
 			}
 		},
@@ -122,9 +125,12 @@ pub fn Panel(params: PanelParams) -> Element {
 		})
 		.collect();
 	rsx! {
-		for view in views.iter() {
-			div {
-				{view.element.clone()}
+		div {
+			class: "panel",
+			for view in views.iter() {
+				div {
+					{view.element.clone()}
+				}
 			}
 		}
 	}

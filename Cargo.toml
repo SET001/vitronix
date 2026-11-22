@@ -28,9 +28,13 @@ gtk = "0.18"
 
 [workspace.dependencies]
 dioxus = { version = "0.7", features = ["desktop"] }
+dioxus-dnd-kit = "0.4.0"
 dioxus-sdk-storage = { version = "0.7" }
 dirs = "5.0"
 indexmap = { version = "2", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 uuid = { version = "1.28.0", features = ["v4"] }
+
+[patch.crates-io]
+dioxus-floating = { path = "../dioxus-floating" }

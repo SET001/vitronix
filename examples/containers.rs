@@ -31,7 +31,7 @@ pub fn App() -> Element {
 				closable: false,
 				element: rsx! { "view 1"},
 			},
-			"exemple.views.description".to_string(),
+			"exemple.views.view1".to_string(),
 		);
 		let view2_id = resources.write().put_named(
 			View {
@@ -39,13 +39,30 @@ pub fn App() -> Element {
 				closable: false,
 				element: rsx! { "view 2"},
 			},
-			"exemple.views.description".to_string(),
+			"exemple.views.view2".to_string(),
 		);
+		let view3_id = resources.write().put_named(
+			View {
+				title: "Description".into(),
+				closable: false,
+				element: rsx! { "view 3"},
+			},
+			"exemple.views.view3".to_string(),
+		);
+		let view4_id = resources.write().put_named(
+			View {
+				title: "Description".into(),
+				closable: false,
+				element: rsx! { "view 4"},
+			},
+			"exemple.views.view4".to_string(),
+		);
+
 		let panel1 = resources.write().put_named(
 			PanelParams {
 				class: "panel-class".to_string(),
 				is_collapsed: Some(false),
-				views: vec![view1_id],
+				views: vec![view1_id.clone(), view2_id],
 			},
 			"panel1".to_string(),
 		);
@@ -54,7 +71,7 @@ pub fn App() -> Element {
 			PanelParams {
 				class: "panel-class".to_string(),
 				is_collapsed: Some(false),
-				views: vec![view2_id],
+				views: vec![view1_id, view3_id, view4_id],
 			},
 			"panel2".to_string(),
 		);
@@ -62,9 +79,11 @@ pub fn App() -> Element {
 	});
 	rsx! {
 		div {
+			class: "flex flex-row gap-4 p-4 w-full",
 			Container{
 				id: "first",
 				params: ContainerParams{
+					class: "flex-col flex-1 min-w-0".to_string(),
 					panels: vec![panels.get(0).unwrap().clone()],
 					..Default::default()
 				}
@@ -72,6 +91,7 @@ pub fn App() -> Element {
 			Container{
 				id: "second",
 				params: ContainerParams{
+					class: "flex-col flex-1 min-w-0".to_string(),
 					panels: vec![panels.get(1).unwrap().clone()],
 					..Default::default()
 				}
