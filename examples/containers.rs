@@ -32,8 +32,8 @@ pub fn App() -> Element {
 	let panels = use_hook(|| {
 		let desc = views_registry
 			.write()
-			.register::<ViewParams>("containers_example.views.some_view", |params: Value| View {
-				element: rsx! { "view {params}" },
+			.register::<ViewParams>("containers_example.views.some_view", |params: ViewParams| View {
+				element: rsx! { "view {params.0}" },
 			});
 		let panel1 = resources.write().put_named(
 			PanelParams {

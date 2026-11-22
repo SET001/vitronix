@@ -116,11 +116,20 @@ pub fn Panel(params: PanelParams) -> Element {
 		.views
 		.iter()
 		.filter_map(|desc| {
-			let factory = views_registry.read().get(desc.template.as_str()).copied();
-			factory.map(|create_view| create_view(desc.params.clone())).or_else(|| {
-				warn!("View resource {} not found for panel", desc.template);
-				None
-			})
+			let factory = views_registry.read().get(desc.template.as_str());
+			match factory {
+				Some(create_view) => match create_view(desc.params.clone()) {
+					Ok(view) => Some(view),
+					Err(err) => {
+						error!("Failed to create view {}: {}", desc.template, err);
+						None
+					}
+				},
+				None => {
+					warn!("View resource {} not found for panel", desc.template);
+					None
+				}
+			}
 		})
 		.collect();
 	rsx! {

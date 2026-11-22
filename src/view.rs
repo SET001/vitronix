@@ -2,7 +2,7 @@ use crate::resource::{Resource, ResourceId};
 use dioxus::prelude::*;
 use dioxus_sdk_storage::{LocalStorage, StorageBacking, StorageEntryTrait, get_from_storage};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 use toml::Value;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -20,6 +20,8 @@ pub struct ViewDescriptor {
 	pub params: Value,
 }
 
+pub type ViewFactory = Arc<dyn Fn(Value) -> Result<View, String>>;
+
 impl ViewDescriptor {
 	pub fn with_params(mut self, params: Value) -> Self {
 		self.params = params;
@@ -29,7 +31,7 @@ impl ViewDescriptor {
 
 #[derive(Clone)]
 pub struct ViewsRegistry {
-	registry: HashMap<String, fn(Value) -> View>,
+	registry: HashMap<String, ViewFactory>,
 }
 
 impl ViewsRegistry {
@@ -39,10 +41,18 @@ impl ViewsRegistry {
 		}
 	}
 
-	pub fn register<T: Default + Serialize>(&mut self, view_name: &str, view: fn(Value) -> View) -> ViewDescriptor {
+	pub fn register<T: Default + Serialize + DeserializeOwned + 'static>(
+		&mut self,
+		view_name: &str,
+		view: fn(T) -> View,
+	) -> ViewDescriptor {
 		debug!("Registering view {} in ViewsRegistry", view_name);
+		let factory = move |value: Value| -> Result<View, String> {
+			let params: T = value.try_into().map_err(|e| e.to_string())?;
+			Ok(view(params))
+		};
 		if let None = self.registry.get(view_name) {
-			self.registry.insert(view_name.into(), view);
+			self.registry.insert(view_name.into(), Arc::new(factory));
 		}
 		ViewDescriptor {
 			template: view_name.into(),
@@ -50,8 +60,8 @@ impl ViewsRegistry {
 		}
 	}
 
-	pub fn get(&self, view_name: &str) -> Option<&fn(Value) -> View> {
-		self.registry.get(view_name)
+	pub fn get(&self, view_name: &str) -> Option<ViewFactory> {
+		self.registry.get(view_name).cloned()
 	}
 }
 
