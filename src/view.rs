@@ -3,24 +3,33 @@ use dioxus::prelude::*;
 use dioxus_sdk_storage::{LocalStorage, StorageBacking, StorageEntryTrait, get_from_storage};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::collections::HashMap;
+use toml::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct View {
-	pub title: String,
-	pub closable: bool,
+	// pub params: T,
 	pub element: Element,
+	// pub closable: bool,
 }
 impl Resource for View {}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ViewDescriptor {
 	pub template: String,
-	pub instance_id: Option<ResourceId<View>>,
+	// pub instance_id: Option<ResourceId<View>>,
+	pub params: Value,
+}
+
+impl ViewDescriptor {
+	pub fn with_params(mut self, params: Value) -> Self {
+		self.params = params;
+		self
+	}
 }
 
 #[derive(Clone)]
 pub struct ViewsRegistry {
-	registry: HashMap<String, fn() -> View>,
+	registry: HashMap<String, fn(Value) -> View>,
 }
 
 impl ViewsRegistry {
@@ -30,15 +39,18 @@ impl ViewsRegistry {
 		}
 	}
 
-	pub fn register(&mut self, view_name: &str, view: fn() -> View) -> ResourceId<View> {
+	pub fn register<T: Default + Serialize>(&mut self, view_name: &str, view: fn(Value) -> View) -> ViewDescriptor {
 		debug!("Registering view {} in ViewsRegistry", view_name);
 		if let None = self.registry.get(view_name) {
 			self.registry.insert(view_name.into(), view);
 		}
-		ResourceId::from_string(view_name.into())
+		ViewDescriptor {
+			template: view_name.into(),
+			params: Value::try_from(T::default()).unwrap(),
+		}
 	}
 
-	pub fn get(&self, view_name: &str) -> Option<&fn() -> View> {
+	pub fn get(&self, view_name: &str) -> Option<&fn(Value) -> View> {
 		self.registry.get(view_name)
 	}
 }

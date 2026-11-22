@@ -1,9 +1,11 @@
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
+use toml::Value;
 use vitronix::{
 	container::{Container, ContainerParams, PanelParams},
 	resource::Resources,
 	runner::{RunConfig, WindowConfig, run},
-	view::View,
+	view::{View, ViewsRegistry},
 	window::WindowWrapper,
 };
 fn main() {
@@ -21,62 +23,43 @@ fn main() {
 	});
 }
 
+#[derive(Default, Clone, PartialEq, Serialize, Deserialize)]
+struct ViewParams(u32);
+
 pub fn App() -> Element {
 	let mut resources = use_context::<Signal<Resources>>();
-
+	let mut views_registry = use_context::<Signal<ViewsRegistry>>();
 	let panels = use_hook(|| {
-		let view1_id = resources.write().put_named(
-			View {
-				title: "Description".into(),
-				closable: false,
-				element: rsx! { "view 1"},
-			},
-			"exemple.views.view1".to_string(),
-		);
-		let view2_id = resources.write().put_named(
-			View {
-				title: "Description".into(),
-				closable: false,
-				element: rsx! { "view 2"},
-			},
-			"exemple.views.view2".to_string(),
-		);
-		let view3_id = resources.write().put_named(
-			View {
-				title: "Description".into(),
-				closable: false,
-				element: rsx! { "view 3"},
-			},
-			"exemple.views.view3".to_string(),
-		);
-		let view4_id = resources.write().put_named(
-			View {
-				title: "Description".into(),
-				closable: false,
-				element: rsx! { "view 4"},
-			},
-			"exemple.views.view4".to_string(),
-		);
-
+		let desc = views_registry
+			.write()
+			.register::<ViewParams>("containers_example.views.some_view", |params: Value| View {
+				element: rsx! { "view {params}" },
+			});
 		let panel1 = resources.write().put_named(
 			PanelParams {
 				class: "panel-class".to_string(),
 				is_collapsed: Some(false),
-				views: vec![view1_id.clone(), view2_id],
+				views: vec![
+					desc.clone().with_params(Value::try_from(ViewParams(1)).unwrap()),
+					desc.clone().with_params(Value::try_from(ViewParams(2)).unwrap()),
+				],
 			},
 			"panel1".to_string(),
 		);
-
 		let panel2 = resources.write().put_named(
 			PanelParams {
 				class: "panel-class".to_string(),
 				is_collapsed: Some(false),
-				views: vec![view1_id, view3_id, view4_id],
+				views: vec![
+					desc.clone().with_params(Value::try_from(ViewParams(3)).unwrap()),
+					desc.clone().with_params(Value::try_from(ViewParams(4)).unwrap()),
+				],
 			},
 			"panel2".to_string(),
 		);
 		vec![panel1, panel2]
 	});
+
 	rsx! {
 		div {
 			class: "flex flex-row gap-4 p-4 w-full",

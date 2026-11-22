@@ -41,7 +41,7 @@ pub fn App() -> Element {
 	use_context_provider(|| plugins);
 	// use_context_provider(|| ViewManager::default());
 	use_context_provider(|| Signal::new(Resources::new()));
-	use_context_provider(|| ViewsRegistry::new());
+	use_context_provider(|| Signal::new(ViewsRegistry::new()));
 
 	let storage_key = format!("{}_layout_manager", config.app_name);
 	info!("Using storage key: {}", storage_key);

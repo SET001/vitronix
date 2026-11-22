@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
 	resource::{Resource, ResourceId},
-	view::View,
+	view::{View, ViewDescriptor, ViewsRegistry},
 };
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
@@ -49,7 +49,7 @@ pub struct PanelParams {
 	/// Sizing along the parent branch's layout axis.
 	/// Sizing across the parent branch's layout axis.
 	// pub views: Vec<ViewDescriptor>,
-	pub views: Vec<ResourceId<View>>,
+	pub views: Vec<ViewDescriptor>,
 }
 impl Resource for PanelParams {}
 
@@ -111,17 +111,16 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 #[component]
 pub fn Panel(params: PanelParams) -> Element {
 	debug!("Rendering panel with params: {:?}", params);
-	let resources = use_context::<Signal<crate::resource::Resources>>();
-	let resources = resources.read();
+	let views_registry = use_context::<Signal<ViewsRegistry>>();
 	let views: Vec<View> = params
 		.views
 		.iter()
-		.filter_map(|view_id| {
-			let view = resources.get(view_id).cloned();
-			if view.is_none() {
-				warn!("View resource {} not found for panel", view_id.id);
-			}
-			view
+		.filter_map(|desc| {
+			let factory = views_registry.read().get(desc.template.as_str()).copied();
+			factory.map(|create_view| create_view(desc.params.clone())).or_else(|| {
+				warn!("View resource {} not found for panel", desc.template);
+				None
+			})
 		})
 		.collect();
 	rsx! {
