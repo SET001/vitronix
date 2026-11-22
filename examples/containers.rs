@@ -1,8 +1,9 @@
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use toml::Value;
 use vitronix::{
-	container::{Container, ContainerParams, PanelParams},
+	container::{Container, ContainerParams, PanelParams, WorkspaceDnd},
 	resource::Resources,
 	runner::{RunConfig, WindowConfig, run},
 	view::{View, ViewsRegistry},
@@ -61,22 +62,24 @@ pub fn App() -> Element {
 	});
 
 	rsx! {
-		div {
-			class: "flex flex-row gap-4 p-4 w-full",
-			Container{
-				id: "first",
-				params: ContainerParams{
-					class: "flex-col flex-1 min-w-0".to_string(),
-					panels: vec![panels.get(0).unwrap().clone()],
-					..Default::default()
+		WorkspaceDnd {
+			div {
+				class: "flex flex-row flex-1 min-h-0 min-w-0 gap-4 p-4 w-full",
+				Container{
+					id: "first",
+					params: ContainerParams{
+						class: "flex-col flex-1 min-w-0".to_string(),
+						panels: vec![panels.get(0).unwrap().clone()],
+						..Default::default()
+					}
 				}
-			}
-			Container{
-				id: "second",
-				params: ContainerParams{
-					class: "flex-col flex-1 min-w-0".to_string(),
-					panels: vec![panels.get(1).unwrap().clone()],
-					..Default::default()
+				Container{
+					id: "second",
+					params: ContainerParams{
+						class: "flex-col flex-1 min-w-0".to_string(),
+						panels: vec![panels.get(1).unwrap().clone()],
+						..Default::default()
+					}
 				}
 			}
 		}

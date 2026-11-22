@@ -908,6 +908,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "dioxus-dnd-kit"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "456d52e03c50a5fadc42599d2d1f909f091cb962d46d393b81cd25d91d663a76"
+dependencies = [
+ "dioxus",
+ "dioxus-floating",
+ "futures",
+ "gloo-timers",
+]
+
+[[package]]
 name = "dioxus-document"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -924,6 +936,15 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
+]
+
+[[package]]
+name = "dioxus-floating"
+version = "0.3.2"
+dependencies = [
+ "dioxus",
+ "gloo-timers",
+ "tokio",
 ]
 
 [[package]]
@@ -1480,12 +1501,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "futures"
+version = "0.3.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a31d2a3fbaaeb2af2368bbdd904aa8e812d3c04a1ee10d3171f52d556e5d0a3"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "futures-executor",
+ "futures-io",
+ "futures-sink",
+ "futures-task",
+ "futures-util",
+]
+
+[[package]]
 name = "futures-channel"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1f9e3d69d39e4862ffed03ed071a76f9a13ba1d9109d355b0f0aa6b15e393c4"
 dependencies = [
  "futures-core",
+ "futures-sink",
 ]
 
 [[package]]
@@ -1540,6 +1577,7 @@ version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d50a92467f8ba5dd6e3ee5d4bd04d73ab2e4e1c44474a0674821dfce14b79bc"
 dependencies = [
+ "futures-channel",
  "futures-core",
  "futures-io",
  "futures-macro",
@@ -2757,7 +2795,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4793,6 +4831,7 @@ name = "vitronix"
 version = "0.1.0"
 dependencies = [
  "dioxus",
+ "dioxus-dnd-kit",
  "dioxus-sdk-storage",
  "dirs 5.0.1",
  "gtk",
@@ -5770,7 +5809,3 @@ checksum = "27bc9d5b815bc103f142aa054f561d9187d191692ec7c2d1e2b4737f8dbd7296"
 dependencies = [
  "zune-core",
 ]
-
-[[patch.unused]]
-name = "dioxus-floating"
-version = "0.3.2"
