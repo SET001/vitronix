@@ -36,6 +36,24 @@ impl LayoutManager {
 		}
 	}
 
+	pub fn set_panel_views(&mut self, panel_name: &str, views: Vec<ViewDescriptor>) {
+		let mut found = false;
+		for panel in self
+			.containers
+			.values_mut()
+			.flat_map(|container| &mut container.panels)
+			.filter(|panel| panel.name == panel_name)
+		{
+			found = true;
+			if panel.views != views {
+				panel.views = views.clone();
+			}
+		}
+		if !found {
+			warn!("Cannot update views for unknown panel {}", panel_name);
+		}
+	}
+
 	pub fn get_or_register(&mut self, container_id: String, container: ContainerParams) -> Result<&mut ContainerParams, String> {
 		info!("Registering container with id {}", container_id);
 		match self.declared_ids.insert(container_id.clone()) {
@@ -188,6 +206,8 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 
 #[component]
 fn Panel(panel: PanelParams, panel_draggable: bool) -> Element {
+	let mut layout_manager = use_context::<Signal<LayoutManager>>();
+	let panel_name = panel.name.clone();
 	let view_items: Signal<Vec<ViewDndItem>> = use_signal(|| {
 		panel
 			.views
@@ -198,6 +218,11 @@ fn Panel(panel: PanelParams, panel_draggable: bool) -> Element {
 				descriptor,
 			})
 			.collect()
+	});
+
+	use_effect(move || {
+		let views = view_items.read().iter().map(|item| item.descriptor.clone()).collect();
+		layout_manager.write().set_panel_views(&panel_name, views);
 	});
 
 	rsx! {
@@ -279,6 +304,52 @@ mod tests {
 			.map(|panel| panel.name.as_str())
 			.collect();
 		assert_eq!(ids, ["panel-b", "panel-a"]);
+	}
+
+	#[test]
+	fn set_panel_views_persists_the_new_order() {
+		let mut layout = LayoutManager::default();
+		layout
+			.get_or_register(
+				"left".into(),
+				ContainerParams {
+					panels: vec![test_panel("panel-a")],
+					..Default::default()
+				},
+			)
+			.unwrap();
+		let views = vec![test_view("view-b"), test_view("view-a")];
+
+		layout.set_panel_views("panel-a", views.clone());
+
+		assert_eq!(layout.get("left").unwrap().panels[0].views, views);
+	}
+
+	#[test]
+	fn panel_views_survive_layout_serialization() {
+		let mut layout = LayoutManager::default();
+		layout
+			.get_or_register(
+				"left".into(),
+				ContainerParams {
+					panels: vec![test_panel("panel-a")],
+					..Default::default()
+				},
+			)
+			.unwrap();
+		layout.set_panel_views("panel-a", vec![test_view("view-a")]);
+
+		let serialized = toml::to_string(&layout).unwrap();
+		let restored: LayoutManager = toml::from_str(&serialized).unwrap();
+
+		assert_eq!(restored.get("left").unwrap().panels[0].views, vec![test_view("view-a")]);
+	}
+
+	fn test_view(template: &str) -> ViewDescriptor {
+		ViewDescriptor {
+			template: template.into(),
+			params: toml::Value::String(String::new()),
+		}
 	}
 
 	fn test_panel(name: &str) -> PanelParams {
