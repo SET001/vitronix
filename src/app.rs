@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::container::LayoutManager;
+use crate::container::{AppDndRoot, LayoutManager, PanelTemplateRegistry};
 use crate::resource::Resources;
 use crate::state::PersistentState;
 use crate::view::{View, ViewsRegistry};
@@ -41,6 +41,8 @@ pub fn App() -> Element {
 	use_context_provider(|| plugins);
 	// use_context_provider(|| ViewManager::default());
 	use_context_provider(|| Signal::new(Resources::new()));
+
+	use_context_provider(|| Signal::new(PanelTemplateRegistry::new()));
 	use_context_provider(|| Signal::new(ViewsRegistry::new()));
 
 	let storage_key = format!("{}_layout_manager", config.app_name);
@@ -73,6 +75,8 @@ pub fn App() -> Element {
 	});
 	rsx! {
 		document::Stylesheet { href: asset!("/assets/styles.css") }
-		{(config.app)()}
+		AppDndRoot {
+			{(config.app)()}
+		}
 	}
 }

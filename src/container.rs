@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
 use dioxus::prelude::*;
-use dioxus_dnd_kit::prelude::{ConnectedLists, DndContext, DragLayout, DraggableHandler, DraggableView, Droppable};
+use dioxus_dnd_kit::prelude::{ConnectedLists, DragLayout, DraggableHandler, DraggableView, Droppable};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-	resource::{Resource, ResourceId},
+	resource::Resource,
 	view::{ViewDescriptor, ViewsRegistry},
 };
 
@@ -26,12 +26,11 @@ impl LayoutManager {
 		self.containers.get(container_id)
 	}
 
-	pub fn set_panels(&mut self, container_id: &str, panel_ids: Vec<String>) {
+	pub fn set_panels(&mut self, container_id: &str, panels: Vec<PanelParams>) {
 		let Some(container) = self.containers.get_mut(container_id) else {
 			warn!("Cannot update panels for unknown container {}", container_id);
 			return;
 		};
-		let panels: Vec<ResourceId<PanelParams>> = panel_ids.into_iter().map(ResourceId::from_string).collect();
 		if container.panels != panels {
 			container.panels = panels;
 		}
@@ -52,28 +51,53 @@ impl LayoutManager {
 // 	});
 // }
 
+pub struct PanelTemplateRegistry {
+	pub templates: HashMap<String, PanelParams>,
+}
+impl PanelTemplateRegistry {
+	pub fn new() -> Self {
+		Self {
+			templates: HashMap::new(),
+		}
+	}
+
+	pub fn register(&mut self, template_name: &str, params: PanelParams) -> Result<(), String> {
+		if self.templates.contains_key(template_name) {
+			Err(format!("Panel template {} is already registered", template_name))
+		} else {
+			self.templates.insert(template_name.to_string(), params);
+			Ok(())
+		}
+	}
+
+	pub fn get(&self, template_name: &str) -> Option<&PanelParams> {
+		self.templates.get(template_name)
+	}
+}
+
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct PanelParams {
+	pub name: String,
 	pub class: String,
+	pub dnd_enabled: bool,
 	// id: ResourceId,
 	// pub display_mode: DisplayMode,
 	pub is_collapsed: Option<bool>,
 	// pub layout_direction: LayoutDirection,
-	/// Sizing along the parent branch's layout axis.
-	/// Sizing across the parent branch's layout axis.
+	// Sizing along the parent branch's layout axis.
+	// Sizing across the parent branch's layout axis.
 	// pub views: Vec<ViewDescriptor>,
 	pub views: Vec<ViewDescriptor>,
 }
+
 impl Resource for PanelParams {}
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Default, Debug)]
 pub struct ContainerParams {
 	pub class: String,
-
-	// pub panels: Vec<PanelParams>,	//	can't contain panels list here because at the time when panels declared, the container might not be registered yet. containers came from app layout
-	pub panels: Vec<ResourceId<PanelParams>>,
+	pub panels: Vec<PanelParams>,
 	// pub layout_direction: LayoutDirection,
-	pub drop_target: bool, // pub children: Vec<Node>,
+	pub dnd_enabled: bool,
 	// pub resizeable: Option<ResizeAxis>,
 	// Sizing along this branch's own layout axis, from its parent's perspective.
 	// pub main_sizing: PanelSizing,
@@ -83,35 +107,23 @@ pub struct ContainerParams {
 }
 impl Resource for ContainerParams {}
 
-#[component]
-pub fn Panel(params: PanelParams) -> Element {
-	rsx! {
-		div { class: "{params.class} panel",
-			for descriptor in params.views.iter() {
-				ViewBody { descriptor: descriptor.clone() }
-			}
-		}
-	}
-}
-
 #[derive(Clone, PartialEq)]
 struct ViewDndItem {
 	id: String,
 	descriptor: ViewDescriptor,
 }
 
-/// Wrap related containers in this component to enable panel and view drag-and-drop between them.
 #[component]
-pub fn WorkspaceDnd(children: Element) -> Element {
+pub fn AppDndRoot(children: Element) -> Element {
 	rsx! {
-		DraggableView::<String> {
+		DraggableView::<PanelParams> {
 			class: "flex flex-col flex-1 min-h-0 min-w-0",
-			key_gen: |id: String| id,
-			render: |id: String| rsx! { PanelContent { id, draggable: true } },
-			overlay_render: |id: String| rsx! {
-				div { class: "panel panel-drag-overlay", "Panel {id}" }
+			key_gen: |panel: PanelParams| panel.name,
+			render: |panel: PanelParams| rsx! { Panel { panel, panel_draggable: true } },
+			overlay_render: |panel: PanelParams| rsx! {
+				div { class: "panel panel-drag-overlay", "Panel {panel.name}" }
 			},
-			ConnectedLists::<String> {
+			ConnectedLists::<PanelParams> {
 				DraggableView::<ViewDndItem> {
 					class: "flex flex-col flex-1 min-h-0 min-w-0",
 					key_gen: |item: ViewDndItem| item.id,
@@ -130,19 +142,13 @@ pub fn WorkspaceDnd(children: Element) -> Element {
 pub fn Container(id: String, params: ContainerParams) -> Element {
 	let mut layout_manager = use_context::<Signal<LayoutManager>>();
 	let registration = use_hook(|| layout_manager.write().get_or_register(id.clone(), params).cloned());
-	let initial_panels = registration
-		.as_ref()
-		.ok()
-		.map(|container| {
-			container
-				.panels
-				.iter()
-				.map(|panel_id| panel_id.id.clone())
-				.collect::<Vec<_>>()
-		})
-		.unwrap_or_default();
-	let panels = use_signal(|| initial_panels);
-	let dnd_enabled = try_use_context::<DndContext<String>>().is_some();
+	let panels = use_signal(|| {
+		registration
+			.as_ref()
+			.ok()
+			.map(|container| container.panels.iter().map(|panel| panel.clone()).collect::<Vec<_>>())
+			.unwrap_or_default()
+	});
 
 	if registration.is_ok() {
 		let container_id = id.clone();
@@ -152,10 +158,10 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 	}
 
 	match registration {
-		Ok(container) if dnd_enabled => rsx! {
+		Ok(container) if container.dnd_enabled => rsx! {
 			div { class: "container-shell flex flex-col flex-1 min-h-0 min-w-0",
 				div { class: "container-title", "{id}" }
-				Droppable::<String> {
+				Droppable::<PanelParams> {
 					id: "container-panels-{id}",
 					class: "{container.class} panel container-panels flex flex-col flex-1 min-h-24 min-w-0 gap-4",
 					items: panels,
@@ -166,8 +172,8 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 		Ok(container) => rsx! {
 			div { class: "{container.class} panel",
 				"{id}"
-				for panel_id in container.panels.iter() {
-					PanelContent { key: "{panel_id.id}", id: panel_id.id.clone(), draggable: false }
+				for panel in container.panels.iter() {
+					Panel { panel: panel.clone(), panel_draggable: false }
 				}
 			}
 		},
@@ -181,55 +187,35 @@ pub fn Container(id: String, params: ContainerParams) -> Element {
 }
 
 #[component]
-fn PanelContent(id: String, draggable: bool) -> Element {
-	let resources = use_context::<Signal<crate::resource::Resources>>();
-	let resource_id = ResourceId::<PanelParams>::from_string(id.clone());
-	let params = resources.read().get(&resource_id).cloned();
-	let view_items = use_signal(|| {
-		params
-			.as_ref()
-			.map(|params| params.views.clone())
-			.unwrap_or_default()
-			.into_iter()
+fn Panel(panel: PanelParams, panel_draggable: bool) -> Element {
+	let view_items: Signal<Vec<ViewDndItem>> = use_signal(|| {
+		panel
+			.views
+			.iter()
+			.cloned()
 			.map(|descriptor| ViewDndItem {
 				id: Uuid::new_v4().to_string(),
 				descriptor,
 			})
-			.collect::<Vec<_>>()
+			.collect()
 	});
 
-	if try_use_context::<DndContext<ViewDndItem>>().is_some() {
-		let mut resources = resources;
-		let panel_id = resource_id.clone();
-		use_effect(move || {
-			let descriptors = view_items.read().iter().map(|item| item.descriptor.clone()).collect();
-			if let Some(panel) = resources.write().get_mut(&panel_id) {
-				panel.views = descriptors;
-			}
-		});
-	}
-
-	let Some(params) = params else {
-		warn!("Panel resource {} not found", id);
-		return rsx! { div { class: "panel", "Panel {id} is unavailable" } };
-	};
-
 	rsx! {
-		div { class: "{params.class} panel panel-content flex flex-col min-h-0 min-w-0",
-			if draggable {
+		div { class: "{panel.class} panel panel-content flex flex-col min-h-0 min-w-0",
+			if panel_draggable {
 				div { class: "panel-drag-bar",
-					DraggableHandler::<String> { class: "panel-drag-handle cursor-grab select-none", item: id.clone(), "⠿" }
+					DraggableHandler::<PanelParams> { class: "panel-drag-handle cursor-grab select-none", item: panel.clone(), "⠿" }
 				}
 			}
-			if try_use_context::<DndContext<ViewDndItem>>().is_some() {
+			if panel.dnd_enabled {
 				Droppable::<ViewDndItem> {
-					id: "panel-views-{id}",
+					id: format!("panel-views-{}", panel.name),
 					class: "panel-views flex flex-col flex-1 min-h-12 min-w-0 gap-2",
 					items: view_items,
 					layout: DragLayout::Relative,
 				}
 			} else {
-				for descriptor in params.views.iter() {
+				for descriptor in panel.views.iter() {
 					ViewBody { descriptor: descriptor.clone() }
 				}
 			}
@@ -277,24 +263,31 @@ mod tests {
 			.get_or_register(
 				"left".into(),
 				ContainerParams {
-					panels: vec![
-						ResourceId::from_string("panel-a".into()),
-						ResourceId::from_string("panel-b".into()),
-					],
+					panels: vec![test_panel("panel-a"), test_panel("panel-b")],
 					..Default::default()
 				},
 			)
 			.unwrap();
 
-		layout.set_panels("left", vec!["panel-b".into(), "panel-a".into()]);
+		layout.set_panels("left", vec![test_panel("panel-b"), test_panel("panel-a")]);
 
 		let ids: Vec<_> = layout
 			.get("left")
 			.unwrap()
 			.panels
 			.iter()
-			.map(|panel| panel.id.as_str())
+			.map(|panel| panel.name.as_str())
 			.collect();
 		assert_eq!(ids, ["panel-b", "panel-a"]);
+	}
+
+	fn test_panel(name: &str) -> PanelParams {
+		PanelParams {
+			name: name.into(),
+			class: String::new(),
+			dnd_enabled: true,
+			is_collapsed: None,
+			views: Vec::new(),
+		}
 	}
 }
